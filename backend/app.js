@@ -1,20 +1,13 @@
 const express = require('express');
 const app = express();
-const connectDB = require('../backend/config/db');
+const authRoute = require('../backend/routes/user.route');
 
 
 // permisssions
 app.use(express.json());
 
-
-// connected to DB
-connectDB();
-
-// middlewares
-
-
-// routes
-
+// middleware
+app.use('/api',authRoute);
 
 module.exports = app;
 

@@ -17,8 +17,21 @@ const userSchema = mongoose.Schema({
     },
     role:{
         type:String,
-        enum:['Admin','Super Admin','user'],
-        default:'user'
+        enum:['Admin','Superadmin'],
+        required:true
+    },
+    profilePic:{
+        type:String,
+    },
+    verificationOTP:{
+        type:Number
+    },
+    isVerified:{
+        type:Boolean,
+        default:false
+    },
+    otpExpiry:{
+        type:Number
     }
 },{
     timestamps:true
