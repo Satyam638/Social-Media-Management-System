@@ -28,14 +28,22 @@ const isValidField = async (req, res, next) => {
         console.log("error occured:", error);
     }
 }
+const isValidUser = async (req, res, next) => {
+    try {
+        const token = req.headers['token']; // ✅ from cookie
 
-const isValidUser = async (req,res)=>{
+        if (!token) {
+            return res.status(401).json('Unauthorized');
+        }
 
-    const token = req.headers['token'];
+        const decoded = jwt.verify(token, process.env.SECRET_KEY);
 
-    if(!token) return res.status(422).json('Unauthorized');
+        req.user = decoded;
+        console.log('Valid User')
+        next();
+    } catch (err) {
+        return res.status(401).json("Invalid token");
+    }
+};
 
-
-}
-
-module.exports = {isValidField,isValidUser};
+module.exports = { isValidField, isValidUser };

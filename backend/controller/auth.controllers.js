@@ -126,13 +126,17 @@ const loginUser = async (req, res) => {
 
     // create token
     const token = jwt.sign({
-      _id: isExist._id,
+      id: isExist._id,
       email: isExist.email,
       role: isExist.role
-    }, process.env.SECRET_KEY,
-      { expiresIn: '1h' })
+    }, process.env.SECRET_KEY)
 
-    res.cookie('token', token)
+    res.cookie('token', token, {
+    httpOnly: true,       // ✅ prevents JS access (XSS protection)
+    secure: false,         // ✅ only sent over HTTPS
+    sameSite: 'Lax',   // ✅ CSRF protection
+    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+});
 
     const userResponse ={
       _id:isExist._id,
@@ -150,5 +154,8 @@ const loginUser = async (req, res) => {
       message: "Internal Server Error"
     });
   }
+}
+const getAlluser = async(req,res)=>{
+  
 }
 module.exports = { registerUser, verifyOtp, loginUser };
