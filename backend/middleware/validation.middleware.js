@@ -30,7 +30,7 @@ const isValidField = async (req, res, next) => {
 }
 const isValidUser = async (req, res, next) => {
     try {
-        const token = req.headers['token']; // ✅ from cookie
+        const token = req.cookies.token; // ✅ from cookie
 
         if (!token) {
             return res.status(401).json('Unauthorized');

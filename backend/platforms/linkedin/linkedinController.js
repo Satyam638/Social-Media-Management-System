@@ -50,19 +50,17 @@ const LinkedInRedirectWithCode = async (req, res) => {
 
 // Step 1 Redirect user to LinkedIn login Page
 const linkedinLogin = (req, res) => {
-    console.log("req.user:",req.user)
+    console.log("req.user:", req.user)
     const userId = '69f4d08754b55ccde5a10b01';
     const url = linkedInAuth.getAuthUrl(userId);
-    res.redirect(url);
+    res.json({ url: url });
 };
 
 // Post to LinkedIn
-const postLinkedIn = async (req, res) => {
-    const { text } = req.body;
-    const { accessToken, personUrn } = req.session;
+const postLinkedIn = async (accessToken, personUrn, text) => {
 
     if (!accessToken) {
-        return res.status(401).json({ error: 'Not authenticated. Visit /linkedin/auth first' });
+        return res.status(401).json({ error: 'KinedIn Access Token Missing. Visit /linkedin/auth first' });
     }
 
     if (!text) {
@@ -71,10 +69,12 @@ const postLinkedIn = async (req, res) => {
 
     try {
         const result = await postToLinkedIn(accessToken, personUrn, text);
-        res.status(200).json({ success: true, post: result });
+        return result;
+
     } catch (err) {
-        console.error('Post error:', err.message);
-        res.status(500).json({ error: 'Failed to post' });
+        console.error('LinkedIn Post Error:', err.message);
+
+        throw new Error(err.message);
     }
 };
 

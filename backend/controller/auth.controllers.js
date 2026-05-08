@@ -112,49 +112,37 @@ const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // check user is exist or not
     const isExist = await userModel.findOne({ email });
-    if (!isExist) return res.status(400).json({ success: false, message: "User Not Found" });
-    // check verified or not
-    if (!isExist.isVerified) return res.status(400).json({ success: false, message: "You are Not Verfied, Verified First" });
+    if (!isExist) return res.status(400).send("User Not Found");
 
-    // check password
+    if (!isExist.isVerified) return res.status(400).send("Verify first");
+
     const isMatch = await bcryptjs.compare(password, isExist.password);
-    if (!isMatch) return res.status(400).json({ success: false, message: "Wrong Password" });
+    if (!isMatch) return res.status(400).send("Wrong Password");
 
-    // everything is fine so allow user to login and show dashboard
-
-    // create token
     const token = jwt.sign({
       id: isExist._id,
       email: isExist.email,
       role: isExist.role
-    }, process.env.SECRET_KEY)
+    }, process.env.SECRET_KEY);
 
     res.cookie('token', token, {
-    httpOnly: true,       // ✅ prevents JS access (XSS protection)
-    secure: false,         // ✅ only sent over HTTPS
-    sameSite: 'Lax',   // ✅ CSRF protection
-    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-});
-
-    const userResponse ={
-      _id:isExist._id,
-      name:isExist.name,
-      email:isExist.email,
-      profilePic:isExist.profilePic
-    }
-    console.log(userResponse);
-    res.status(200).json({ success: true, message: "Login Successfully!!", data: { userResponse, token } });
-  }
-  catch (error) {
-    console.log(error);
-    res.status(500).json({
-      success: false,
-      message: "Internal Server Error"
+      httpOnly: true,
+      secure: false,
+      sameSite: 'Lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000
     });
+
+    console.log("Login success:", isExist.email);
+    console.log("TOKEN:", token);
+
+    return res.redirect('/'); // ✅ STOP here
+
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send("Internal Server Error");
   }
-}
+};
 const getAlluser = async(req,res)=>{
   
 }

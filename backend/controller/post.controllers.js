@@ -1,6 +1,6 @@
 const postModel = require('../model/post.model');
 const userModel = require('../model/user.model');
-const { postLinkedIn } = require('../platforms/linkedin/linkedinController');
+const { postLinkedIn} = require('../platforms/linkedin/linkedinController');
 const linkedinServices = require('../platforms/linkedin/linkedinService');
 
 const createPost = async (req, res) => {
@@ -11,12 +11,15 @@ const createPost = async (req, res) => {
         // to debug purpose 
         console.log("REQ.USER:", req.user);
         console.log("USER ID:", req.user?.id);
+        const imagePath = req.file ? req.file.path : null;
+        console.log("req.file:", req.file);       // ← add this
+        console.log("imagePath:", imagePath);
 
         const platforms = {
-            linkedin:  req.body.platforms?.linkedin  === true || req.body.platforms?.linkedin  === 'true',
-            twitter:   req.body.platforms?.twitter   === true || req.body.platforms?.twitter   === 'true',
+            linkedin: req.body.platforms?.linkedin === true || req.body.platforms?.linkedin === 'true',
+            twitter: req.body.platforms?.twitter === true || req.body.platforms?.twitter === 'true',
             instagram: req.body.platforms?.instagram === true || req.body.platforms?.instagram === 'true',
-            facebook:  req.body.platforms?.facebook  === true || req.body.platforms?.facebook  === 'true',
+            facebook: req.body.platforms?.facebook === true || req.body.platforms?.facebook === 'true',
         };
 
         // create entry into database
@@ -24,14 +27,12 @@ const createPost = async (req, res) => {
             userId: userId,
             content: content,
             platforms,
-            // imageURL: imageURL
+            imageURL: imagePath || '',
         });
         console.log("Post and Data saved into DB");
         // lets fetch user from Users Model
         const user = await userModel.findById(userId);
         const results = {};
-        // calls platforms to post
-
         // check linkedin connected or not
         if (platforms?.linkedin) {
             // if not connected then show message
@@ -44,38 +45,53 @@ const createPost = async (req, res) => {
             // else lets procced to create post
             else {
                 try {
-                    const linkedinRes = await postLinkedIn(
-                        user.platforms.linkedin.accessToken,
-                        user.platforms.linkedin.personUrn,
-                        content
-                    );
+
+                    let linkedInRes;
+                    if (imagePath) {
+                        console.log('Posting With Media');
+                        linkedinRes = await linkedinServices.postToLinkedInWithImage(
+                            user.platforms.linkedin.accessToken,
+                            user.platforms.linkedin.personUrn,
+                            content,
+                            imagePath
+                        );
+                    }
+                    else {
+                        console.log('Posting Without Media');
+                        linkedinRes = await linkedinServices.postToLinkedIn(
+                            user.platforms.linkedin.accessToken,
+                            user.platforms.linkedin.personUrn,
+                            content
+                        );
+                    }
+
                     results.linkedin = {
                         success: true,
                         postId: linkedinRes.id
                     }
                 }
                 catch (err) {
-                        results.linkedin = {
-                            success: false,
-                            error: err.message
-                        };
-                    }
+                    results.linkedin = {
+                        success: false,
+                        error: err.message
+                    };
+                }
             }
         }
 
         //lets update status
-        const statuses=Object.values(results);
-        const allSuccess = statuses.length > 0  && statuses.every(r=>r.success);
-        const allFailed = statuses.length > 0  && statuses.every(r=>!r.success);
+        const statuses = Object.values(results);
+        const allSuccess = statuses.length > 0 && statuses.every(r => r.success);
+        const allFailed = statuses.length > 0 && statuses.every(r => !r.success);
 
         newPost.results = results
-        newPost.postStatus = allSuccess ? 'published' : allFailed? 'failed':'partial';
+        newPost.postStatus = allSuccess ? 'published' : allFailed ? 'failed' : 'partial';
         await newPost.save();
 
-        console.log("Publish Post in FB");
+        console.log("Publish Post");
         res.status(201).json({
             success: allSuccess,
-            message: allSuccess? "Post Published 🎉" :allFailed ? "Failed to post": 'Partially published',
+            message: allSuccess ? "Post Published 🎉" : allFailed ? "Failed to post" : 'Partially published',
             error: results.error,
             results,
             data: newPost
