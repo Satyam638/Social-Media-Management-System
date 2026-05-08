@@ -53,7 +53,7 @@ const linkedinLogin = (req, res) => {
     console.log("req.user:", req.user)
     const userId = '69f4d08754b55ccde5a10b01';
     const url = linkedInAuth.getAuthUrl(userId);
-    res.json({ url: url });
+    res.redirect(url);
 };
 
 // Post to LinkedIn
