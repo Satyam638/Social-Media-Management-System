@@ -35,11 +35,11 @@ const LinkedInRedirectWithCode = async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
         console.log("✅ Token saved successfully!");
-        res.json({
-            message: `Connected as ${profile.name}`,
-            personUrn: profile.sub,
-            isConnected: updatedUser.platforms.linkedin.isConnected
-        });
+        const userName = profile.name;
+
+        res.redirect(
+            `http://localhost:5173/dashboard?connected=true&name=${encodeURIComponent(userName)}`
+        );
 
     } catch (err) {
         console.error('OAuth error:', err.message);

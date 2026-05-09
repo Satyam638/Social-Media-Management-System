@@ -20,8 +20,10 @@ const registerUser = async (req, res) => {
     // 🔹 Upload Image (optional)
     let imageUrl = '';
     if (req.file) {
+      console.log(req.body);
+      console.log(req.file);
       const response = await imagekit.upload({
-        file: req.file.buffer,
+        file: req.file.buffer.toString('base64'),
         fileName: req.file.originalname,
         folder: '/Social-Media-Management-System/users'
       });

@@ -1,10 +1,30 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import API from '../services/api';
 
 export default function Dashboard() {
 
     const [content, setContent] = useState('');
     const [image, setImage] = useState(null);
+    const [isConnected, setIsConnected] = useState(false);
+    const [linkedinName, setLinkedinName] = useState('');
+
+    useEffect(() => {
+
+        const params = new URLSearchParams(window.location.search);
+
+        const connected = params.get('connected');
+        const name = params.get('name');
+
+        if (connected === 'true') {
+
+            setIsConnected(true);
+            setLinkedinName(name);
+
+            // remove query params from URL
+            window.history.replaceState({}, document.title, '/dashboard');
+        }
+
+    }, []);
 
     const connectLinkedIn = () => {
 
@@ -20,14 +40,19 @@ export default function Dashboard() {
 
             formData.append('content', content);
 
-            formData.append('platforms[linkedin]', true);
+            formData.append(
+                'platforms',
+                JSON.stringify({
+                    linkedin: true
+                })
+            );
 
             if (image) {
                 formData.append('image', image);
             }
 
             const res = await API.post(
-                '/posts/create-post',
+                '/api/posts/create-post',
                 formData,
                 {
                     headers: {
@@ -41,8 +66,15 @@ export default function Dashboard() {
             alert(res.data.message);
 
         } catch (err) {
+
             console.log(err);
-            alert('Post Failed');
+
+            console.log(err.response?.data);
+
+            alert(
+                err.response?.data?.message ||
+                'Post Failed'
+            );
         }
     };
 
@@ -61,12 +93,35 @@ export default function Dashboard() {
 
                 <button
                     onClick={connectLinkedIn}
-                    className="bg-blue-600 text-white px-6 py-3 rounded"
+                    className="bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700 transition"
                 >
                     Connect LinkedIn
                 </button>
 
             </div>
+
+            {
+                isConnected && (
+                    <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-4 rounded-xl mb-8">
+
+                        <p className="text-lg font-semibold">
+                            LinkedIn Connected Successfully ✅
+                        </p>
+
+                        <p className="mt-2">
+                            Connected as{' '}
+                            <span className="font-bold">
+                                {linkedinName}
+                            </span>
+                        </p>
+
+                        <p className="mt-3 font-medium text-green-800">
+                            Let's create post 🚀
+                        </p>
+
+                    </div>
+                )
+            }
 
             <div className="bg-white p-6 rounded-xl shadow-lg">
 
@@ -78,7 +133,7 @@ export default function Dashboard() {
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
                     placeholder="Write your content..."
-                    className="w-full border p-4 rounded mb-4 h-40"
+                    className="w-full border p-4 rounded mb-4 h-40 outline-none focus:ring-2 focus:ring-green-500"
                 />
 
                 <input
@@ -89,7 +144,7 @@ export default function Dashboard() {
 
                 <button
                     onClick={handlePost}
-                    className="bg-green-600 text-white px-6 py-3 rounded"
+                    className="bg-green-600 text-white px-6 py-3 rounded hover:bg-green-700 transition"
                 >
                     Publish Post
                 </button>

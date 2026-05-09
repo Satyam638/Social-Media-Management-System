@@ -1,20 +1,25 @@
 const postModel = require('../model/post.model');
 const userModel = require('../model/user.model');
-const { postLinkedIn} = require('../platforms/linkedin/linkedinController');
+const { postLinkedIn } = require('../platforms/linkedin/linkedinController');
 const linkedinServices = require('../platforms/linkedin/linkedinService');
 
 const createPost = async (req, res) => {
 
     try {
         const { content } = req.body;
+        console.log(req.body);
+        console.log(typeof req.body.platforms);
+        console.log(req.body.platforms);
         const userId = req.user.id;
+        console.log(req.body);
+        console.log(typeof req.body.platforms);
+        console.log(req.body.platforms);
         // to debug purpose 
         console.log("REQ.USER:", req.user);
         console.log("USER ID:", req.user?.id);
         const imagePath = req.file ? req.file.path : null;
         console.log("req.file:", req.file);       // ← add this
         console.log("imagePath:", imagePath);
-
         const platforms = {
             linkedin: req.body.platforms?.linkedin === true || req.body.platforms?.linkedin === 'true',
             twitter: req.body.platforms?.twitter === true || req.body.platforms?.twitter === 'true',
@@ -99,6 +104,7 @@ const createPost = async (req, res) => {
     }
     catch (error) {
         console.error('createPost error:', error);
+        console.log(error.response?.data);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 }

@@ -38,7 +38,7 @@ app.use(session({
 }));
 // middleware
 app.use('/api', authRoute);
-app.use('/post-api', postRoute);
+app.use('/api/posts', postRoute);
 app.use('/api/linkedin', linkedInRoute);
 
 
