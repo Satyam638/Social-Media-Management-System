@@ -5,7 +5,8 @@ const isValidUser = require('../middleware/validation.middleware');
 const upload = require('../config/upload');
 
 route.post('/create-post',
-    isValidUser.isValidUser,
+    isValidUser.isValidUser, // tocheck is user logged in or not
+    isValidUser.isConnectedtoLinkedIn, // to check either connected to platform or not
     upload.single('image'),
     postController.createPost
 );

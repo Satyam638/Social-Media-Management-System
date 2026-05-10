@@ -8,7 +8,7 @@ const postToLinkedIn = async (accessToken, personUrn, text) => {
         console.log("PERSON URN:", personUrn);
         const body = {
             author: `urn:li:person:${personUrn}`,
-            lifecycleState: 'PUBLISHED',
+            lifecycleState: 'PUBLISHED', // publish immediately
             specificContent: {
                 'com.linkedin.ugc.ShareContent': {
                     shareCommentary: {

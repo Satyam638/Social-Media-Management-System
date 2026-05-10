@@ -20,11 +20,21 @@ const createPost = async (req, res) => {
         const imagePath = req.file ? req.file.path : null;
         console.log("req.file:", req.file);       // ← add this
         console.log("imagePath:", imagePath);
+        // Parse platforms safely
+        let parsedPlatforms = {};
+        try {
+            parsedPlatforms = typeof req.body.platforms === 'string'
+                ? JSON.parse(req.body.platforms)   // ← parse if string (from FormData)
+                : req.body.platforms;              // ← use directly if already object (from JSON body)
+        } catch (e) {
+            parsedPlatforms = {};
+        }
+
         const platforms = {
-            linkedin: req.body.platforms?.linkedin === true || req.body.platforms?.linkedin === 'true',
-            twitter: req.body.platforms?.twitter === true || req.body.platforms?.twitter === 'true',
-            instagram: req.body.platforms?.instagram === true || req.body.platforms?.instagram === 'true',
-            facebook: req.body.platforms?.facebook === true || req.body.platforms?.facebook === 'true',
+            linkedin: parsedPlatforms.linkedin === true || parsedPlatforms.linkedin === 'true',
+            twitter: parsedPlatforms.twitter === true || parsedPlatforms.twitter === 'true',
+            instagram: parsedPlatforms.instagram === true || parsedPlatforms.instagram === 'true',
+            facebook: parsedPlatforms.facebook === true || parsedPlatforms.facebook === 'true',
         };
 
         // create entry into database
@@ -102,11 +112,14 @@ const createPost = async (req, res) => {
             data: newPost
         })
     }
-    catch (error) {
-        console.error('createPost error:', error);
-        console.log(error.response?.data);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
+    catch (err) {
+    console.error("❌ LinkedIn error message:", err.message);
+    console.error("❌ LinkedIn API response:", err.response?.data); // ← LinkedIn's exact error
+    results.linkedin = {
+        success: false,
+        error: err.response?.data || err.message  // ← send full error back
+    };
+}
 }
 
 const allPublishedPost = async (req, res) => {

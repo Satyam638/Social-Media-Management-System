@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const userModel = require('../model/user.model');
 
 
 const isValidField = async (req, res, next) => {
@@ -30,20 +31,37 @@ const isValidField = async (req, res, next) => {
 }
 const isValidUser = async (req, res, next) => {
     try {
-        const token = req.cookies.token; // ✅ from cookie
+        // read from cookie OR Authorization header
+        let token = req.cookies?.token;
+
+        if (!token && req.headers.authorization) {
+            token = req.headers.authorization.split(' ')[1]; // Bearer <token>
+        }
 
         if (!token) {
             return res.status(401).json('Unauthorized');
         }
 
         const decoded = jwt.verify(token, process.env.SECRET_KEY);
-
         req.user = decoded;
-        console.log('Valid User')
+        console.log('Valid User:', decoded);
         next();
     } catch (err) {
         return res.status(401).json("Invalid token");
     }
 };
+const isConnectedtoLinkedIn = async(req,res,next)=>{
+    try{
 
-module.exports = { isValidField, isValidUser };
+        const user = await userModel.findById(id);
+
+        if(!user.platforms.linkedin.isConnected) res.status(422).json({success:false,message:'Please Connect to PlatForm First'});
+        
+        console.log('Your Are Connected to Platform');
+        next();
+    } catch (err) {
+        console.log(err.message);
+        return res.status(401).json("Internal Server Error");
+    }
+}
+module.exports = { isValidField, isValidUser, isConnectedtoLinkedIn};

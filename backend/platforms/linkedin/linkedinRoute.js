@@ -2,8 +2,11 @@ const express = require('express');
 const router = express.Router();
 const linkedInController = require('../linkedin/linkedinController');
 const authenticate = require('../../middleware/validation.middleware');
-// ROUTE 1 - Redirect user to LinkedIn login
-router.get('/auth',authenticate.isValidUser,linkedInController.linkedinLogin);
+// ROUTE 1 - Redirect user from SMMS software to LinkedIn login
+router.get('/auth',
+    authenticate.isValidUser,
+    linkedInController.linkedinLogin
+);
 
 // ROUTE 2 - LinkedIn redirects back here with a code
 router.get('/callback',linkedInController.LinkedInRedirectWithCode);

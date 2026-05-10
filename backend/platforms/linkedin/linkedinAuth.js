@@ -12,14 +12,15 @@ const getAuthUrl = (userId)=>{
 
     return `https://www.linkedin.com/oauth/v2/authorization` +
     `?response_type=code` +
-    `&client_id=${process.env.LINKEDIN_CLIENT_ID}` +
-    `&redirect_uri=${encodeURIComponent(process.env.LINKEDIN_REDIRECT_URI)}` +
-    `&state=${userId}` +
-    `&scope=${scopes}`;
+    `&client_id=${process.env.LINKEDIN_CLIENT_ID}` + //SMMS client id
+    `&redirect_uri=${encodeURIComponent(process.env.LINKEDIN_REDIRECT_URI)}` + //after login linkedin redirect to this URL
+    `&state=${userId}` +  // SMMS userID to remember 
+    `&scope=${scopes}`; // permissions which want
 };
 
 // step 2 lets exchange the code for an access token
 const getAccessToken = async(code)=>{
+    // call linkedin api with temporary code to get actual code
     const response = await axios.post(
         'https://www.linkedin.com/oauth/v2/accessToken',
         new URLSearchParams({
@@ -31,6 +32,7 @@ const getAccessToken = async(code)=>{
         }),
         { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
     );
+    // send accesstoekn to fetch linkedin user details / profile
     return response.data.access_token
 }
 
