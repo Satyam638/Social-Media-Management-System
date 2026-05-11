@@ -2,6 +2,8 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('../backend/config/swagger');
 const session = require('express-session');
 const authRoute = require('../backend/routes/user.route');
 const postRoute = require('../backend/routes/post.route');
@@ -40,6 +42,9 @@ app.use(session({
 app.use('/api', authRoute);
 app.use('/api/posts', postRoute);
 app.use('/api/linkedin', linkedInRoute);
+
+// add this after your other middleware
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 
 module.exports = app;
