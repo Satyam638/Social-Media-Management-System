@@ -53,8 +53,10 @@ const userSchema = mongoose.Schema({
         },
         facebook: {
             accessToken: { type: String, default: null },
+            pageToken: { type: String, default: null },
             pageId: { type: String, default: null },
             isConnected: { type: Boolean, default: false },
+            pageName: { type: String, default: null },
             connectedAt: { type: Date, default: null }
         }
     }
