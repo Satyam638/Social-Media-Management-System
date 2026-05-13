@@ -7,6 +7,7 @@ const swaggerSpec = require('../backend/config/swagger');
 const session = require('express-session');
 const authRoute = require('../backend/routes/user.route');
 const postRoute = require('../backend/routes/post.route');
+const facebookRoute = require('../backend/platforms/facebook/facebookRoute');
 const linkedInRoute = require('../backend/platforms/linkedin/linkedinRoute');
 // permisssions
 app.use(express.json());
@@ -42,6 +43,7 @@ app.use(session({
 app.use('/api', authRoute);
 app.use('/api/posts', postRoute);
 app.use('/api/linkedin', linkedInRoute);
+app.use('/api/facebook',facebookRoute);
 
 // add this after your other middleware
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
