@@ -5,50 +5,55 @@ const userModel = require('../../model/user.model');
 
 // lets connect to facebook
 const connectFacebook = async (req, res) => {
+    console.log('req.user:', req.user);
     const userId = req.user.id;
     const url = fbAuth.getFbAuthUrl(userId);
     console.log('URL:', JSON.stringify(url));
-// JSON.stringify will reveal any hidden spaces or newlines
+    // JSON.stringify will reveal any hidden spaces or newlines
     res.redirect(url);
 }
 
-// facebook callbck where it send code and permisiions for further
+// facebook callback where it send code and permisiions for further
 const facebookCallback = async (req, res) => {
 
     const { code, state: userId } = req.query;
 
+    console.log('CODE:', code);
+    console.log('USER ID:', userId);
 
     try {
         // lets exchange code to get short lived code(1 hr)
         const shortToken = await fbAuth.getShortLivedToken(code)
 
-        // now lets get actual tolem by exchanging short lived token
+        // now lets get actual tolen by exchanging short lived token
         const longToken = await fbAuth.getLongLivedToken(shortToken);
 
         // get list of pages users have to get page token
-        const pageToken = await fbAuth.getUserPages(longToken);
+        const pages = await fbAuth.getUserPages(longToken);
 
         // lets change either atlest 1 page is created or not
-        if (!pageToken || pageToken.length === 0) {
+        if (!pages  || pages.length === 0) {
             return res.redirect(
                 `${process.env.FRONTEND_URL}/dashboard?facebook=no_pages`
             );
         };
 
         // use first page by default
-        const page = pageToken[0];
+        const page = pages[0];
 
+        console.log('Page',page);
+        console.log('Page id',page.id);
 
-        // now save information to DB
-
-        await userModel.save(userId, {
+        // now update user information to DB
+        await userModel.findByIdAndUpdate(userId, {
             'platforms.facebook.accessToken': longToken,
             'platforms.facebook.pageToken': page.access_token,
             'platforms.facebook.pageName': page.name,
-            'platforms.facebook.isConnected': true,
+            'platforms.facebook.pageId': page.id,
+            'platforms.facebook.isConnected': true, 
             'platforms.facebook.connectedAt': new Date()
         });
-
+        console.log('Connected to Facebook Successfully !!')
         res.redirect(
             `${process.env.FRONTEND_URL}/dashboard?facebook=connected`
         );
@@ -82,7 +87,7 @@ const disconnectFacebook = async (req, res) => {
 // ── Check connection status ────────────────────────────────
 const facebookStatus = async (req, res) => {
     try {
-        const user = await User.findById(req.user.id);
+        const user = await userModel.findById(req.user.id);
         res.json({
             isConnected: user.platforms.facebook.isConnected,
             pageName: user.platforms.facebook.pageName,

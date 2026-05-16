@@ -80,7 +80,6 @@ const registerUser = async (req, res) => {
     });
   }
 };
-
 const verifyOtp = async (req, res) => {
 
   try {
@@ -138,8 +137,10 @@ const loginUser = async (req, res) => {
     console.log("Login success:", isExist.email);
     console.log("TOKEN:", token);
 
-    return res.redirect('/'); // ✅ STOP here
-
+    return res.status(200).json({
+      success:true,
+      message:"Logged In Successfully, Lets's create Post for you"
+    });
   } catch (error) {
     console.log(error);
     return res.status(500).send("Internal Server Error");

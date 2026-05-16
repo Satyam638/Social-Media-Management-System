@@ -8,13 +8,13 @@ const GRAPH_API = 'https://graph.facebook.com/v19.0';
 
 const postToFacebook  = async(pageToken, pageId, content)=>{
 
-    const response = await axios.post(`${GRAPH_API}/${pageId/feed}`,
+    const response = await axios.post(`${GRAPH_API}/${pageId}/feed`,
         {
             message: content,
             access_token:pageToken
         }
     );
-    return response.data
+    return response.data;
 
 }
     module.exports = {postToFacebook};

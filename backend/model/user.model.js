@@ -38,6 +38,7 @@ const userSchema = mongoose.Schema({
         linkedin: {
             accessToken: { type: String, default: null },
             personUrn: { type: String, default: null },
+            name:{type:String, default:null},
             isConnected: { type: Boolean, default: false },
             connectedAt: { type: Date, default: null }
         },

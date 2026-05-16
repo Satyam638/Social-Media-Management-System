@@ -17,21 +17,6 @@ app.use(cors({
   credentials: true
 }))
 app.use(cookieParser());
-app.get('/', (req, res) => {
-  res.send(`
-    <h2>Login</h2>
-
-    <form method="POST" action="api/auth/login">
-      <input name="email" placeholder="email" />
-      <input name="password" type="password" placeholder="password" />
-      <button type="submit">Login</button>
-    </form>
-
-    <br/>
-
-    <a href="/api/linkedin/auth">Connect LinkedIn</a>
-  `);
-});
 // Session middleware (needed to store tokens)
 app.use(session({
   secret: process.env.SESSION_SECRET,

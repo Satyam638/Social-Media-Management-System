@@ -29,27 +29,45 @@ const isValidField = async (req, res, next) => {
         console.log("error occured:", error);
     }
 }
-const isValidUser = async (req, res, next) => {
+const isValidUser = (req, res, next) => {
     try {
-        // read from cookie OR Authorization header
-        let token = req.cookies?.token;
+        let token = null;
 
-        if (!token && req.headers.authorization) {
-            token = req.headers.authorization.split(' ')[1]; // Bearer <token>
+        // check Authorization header first (Postman)
+        const authHeader = req.headers.authorization;
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            token = authHeader.split(' ')[1];
+            console.log('Token from header');
+        }
+
+        // check cookie (browser)
+        if (!token && req.cookies?.token) {
+            token = req.cookies.token;  // ✅ fixed
+            console.log('Token from cookie');
         }
 
         if (!token) {
-            return res.status(401).json('Unauthorized');
+            return res.status(401).json({
+                success: false,
+                error: 'No token provided'
+            });
         }
 
         const decoded = jwt.verify(token, process.env.SECRET_KEY);
         req.user = decoded;
         console.log('Valid User:', decoded);
         next();
+
     } catch (err) {
-        return res.status(401).json("Invalid token");
+        console.error('Auth error:', err.message);
+        return res.status(401).json({
+            success: false,
+            error: 'Invalid or expired token'
+        });
     }
 };
+
+module.exports = { isValidUser };
 const isConnectedtoLinkedIn = async(req,res,next)=>{
     try{
 
@@ -64,8 +82,6 @@ const isConnectedtoLinkedIn = async(req,res,next)=>{
         return res.status(401).json("Internal Server Error");
     }
 }
-
-
 // characters define for each content length for consistency of platform oriented content
 const PLATFORM_LIMITS = {
     linkedin:3000,

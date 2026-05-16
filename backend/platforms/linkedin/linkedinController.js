@@ -42,8 +42,8 @@ const LinkedInRedirectWithCode = async (req, res) => {
         const userName = profile.name;
 
         //after coonected we will navigate to the dashboard for creating post 
-        res.redirect(
-            `http://localhost:5173/dashboard?connected=true&name=${encodeURIComponent(userName)}`
+         res.redirect(
+            `${process.env.FRONTEND_URL}/dashboard?linkedin=connected&name=${encodeURIComponent(profile.name)}`
         );
 
     } catch (err) {
@@ -95,6 +95,7 @@ const checkPostStatus = async (req, res) => {
 
         res.json({
             isConnected: user.platforms.linkedin.isConnected,
+            name:user.platforms.linkedin.name,
             connectedAt: user.platforms.linkedin.connectedAt
         });
     } catch (err) {

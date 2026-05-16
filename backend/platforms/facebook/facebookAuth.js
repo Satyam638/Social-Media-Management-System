@@ -26,9 +26,9 @@ const getFbAuthUrl =(userId)=>{
 const getShortLivedToken = async(code)=>{
     const response = await axios.get(`${GRAPH_API}/oauth/access_token`,{
         params:{
-            client_id:process.env.FACEBOOK_APP_ID,
-            client_secret:process.env.FACEBOOK_APP_SECRET,
-            redirect_uri:process.env.FACEBOOK_REDIRECT_URI,
+            client_id: process.env.FACEBOOK_APP_ID,
+            client_secret: process.env.FACEBOOK_APP_SECRET,
+            redirect_uri: process.env.FACEBOOK_REDIRECT_URI,
             code
         }
     });
@@ -40,8 +40,8 @@ const getLongLivedToken = async (shortLivedToken) => {
     const response = await axios.get(`${GRAPH_API}/oauth/access_token`, {
         params: {
             grant_type:        'fb_exchange_token',
-            client_id:         FACEBOOK_APP_ID,
-            client_secret:     FACEBOOK_APP_SECRET,
+            client_id:         process.env.FACEBOOK_APP_ID,
+            client_secret:     process.env.FACEBOOK_APP_SECRET,
             fb_exchange_token: shortLivedToken
         }
     });

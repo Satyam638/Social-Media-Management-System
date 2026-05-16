@@ -1,8 +1,11 @@
 const postModel = require('../model/post.model');
 const userModel = require('../model/user.model');
 const { postLinkedIn } = require('../platforms/linkedin/linkedinController');
+// const {  } = require('../platforms/facebook/facebookController');
 const linkedinServices = require('../platforms/linkedin/linkedinService');
+const { postToFacebook } = require('../platforms/facebook/facebookService');
 const postValidation = require('../middleware/validation.middleware');
+const { default: axios } = require('axios');
 
 // const createPost = async (req, res) => {
 
@@ -122,30 +125,30 @@ const postValidation = require('../middleware/validation.middleware');
 //     };
 // }
 // }
-const createPost = async(req,res)=>{
+const createPost = async (req, res) => {
 
-    try{
+    try {
         // get request 
 
-        const {platforms, scheduledAt} = req.body
+        const { platforms, scheduledAt } = req.body
         const userId = req.user.id;
 
         // check input is valid or not
-        if(!platforms || typeof platforms !== 'object'){
+        if (!platforms || typeof platforms !== 'object') {
             return res.status(400).json({
-                success:false,
-                error:"Platform object is required"
+                success: false,
+                error: "Platform object is required"
             });
         }
 
         // check any one platform is enabled or not 
         // we use some() fn which is true whn any one value is true 
-        const hasEnabled = Object.values(platforms).some(p=>p.enabled);
+        const hasEnabled = Object.values(platforms).some(p => p.enabled);
 
-        if(!hasEnabled){
+        if (!hasEnabled) {
             return res.status(400).json({
-                success:false,
-                error:"Atleast Enable one Platform"
+                success: false,
+                error: "Atleast Enable one Platform"
             });
         }
 
@@ -154,7 +157,7 @@ const createPost = async(req,res)=>{
         const validationErrors = postValidation.validatePlatforms(platforms)
 
         // if any error have then we will return error
-         if (validationErrors.length > 0) {
+        if (validationErrors.length > 0) {
             return res.status(400).json({
                 success: false,
                 errors: validationErrors
@@ -167,7 +170,7 @@ const createPost = async(req,res)=>{
 
         const user = await userModel.findById(userId);
 
-        if(!user){
+        if (!user) {
             return res.status(404).json({
                 success: false,
                 error: 'User not found'
@@ -178,28 +181,27 @@ const createPost = async(req,res)=>{
         const newPost = await postModel.create({
             userId,
             platforms,
-            overallStatus:'pending',
+            overallStatus: 'pending',
             scheduledAt: scheduledAt || null
         });
         console.log(`📝 Post created in DB: ${newPost._id}`);
 
         // now let's call platforms apis to publish a post 
 
-        // for linkedin
-
-        if(platforms.linkedin?.enabled){
+        // posting on LINKEDIN
+        if (platforms.linkedin?.enabled) {
             console.log('📤 Attempting LinkedIn post...');
 
-            if(!user.platforms?.linkedin.isConnected){
-                newPost.platforms.linkedin.status='failed',
-                newPost.platforms.linkedin.error= 'LinkedIn not connected. ' + 'Visit /api/linkedin/auth first';
+            if (!user.platforms?.linkedin.isConnected) {
+                newPost.platforms.linkedin.status = 'failed',
+                    newPost.platforms.linkedin.error = 'LinkedIn not connected. ' + 'Visit /api/linkedin/auth first';
 
                 console.log('❌ LinkedIn not connected');
             }
 
             // it means platform is connected now call postTolinkedIn API
-            else{
-                try{
+            else {
+                try {
                     const result = await postLinkedIn(
                         user.platforms.linkedin.accessToken,
                         user.platforms.linkedin.personUrn,
@@ -207,19 +209,60 @@ const createPost = async(req,res)=>{
                     );
 
                     // update status after post
-                    newPost.platforms.linkedin.status   = 'published';
-                    newPost.platforms.linkedin.postId   = result.id;
+                    newPost.platforms.linkedin.status = 'published';
+                    newPost.platforms.linkedin.postId = result.id;
                     newPost.platforms.linkedin.postedAt = new Date();
-                    newPost.platforms.linkedin.error    = null;
+                    newPost.platforms.linkedin.error = null;
 
                     console.log(`✅ LinkedIn posted: ${result.id}`)
                 }
                 catch (err) {
                     // ❌ LinkedIn API call failed
                     newPost.platforms.linkedin.status = 'failed';
-                    newPost.platforms.linkedin.error  = err.message;
+                    newPost.platforms.linkedin.error = err.message;
 
                     console.error(`❌ LinkedIn failed: ${err.message}`);
+                }
+            }
+        }
+
+        // posting on Fcebook
+        if (platforms.facebook?.enabled) {
+
+            console.log('Attempting Facebook Post');
+
+            if (!user.platforms?.facebook.isConnected) {
+                newPost.platforms.facebook.status = 'failed';
+                newPost.platforms.facebook.err = 'Facebook Not Connected Visit /api/facebook/auth first';
+                console.log('Facebook Not Connected');
+            }
+
+            else {
+                try {
+                    console.log('PAGE TOKEN:', user.platforms.facebook.pageToken);
+                    console.log('PAGE ID:', user.platforms.facebook.pageId);
+                    console.log('CONTENT:', platforms.facebook.content);
+                    const result = await postToFacebook(
+                        user.platforms.facebook.pageToken,
+                        user.platforms.facebook.pageId,
+                        platforms.facebook.content
+                    );
+                    newPost.platforms.facebook.status = 'published',
+                        newPost.platforms.facebook.postId = result.id,
+                        newPost.platforms.facebook.postedAt = new Date(),
+                        newPost.platforms.facebook.error = null;
+
+                    console.log(`✅ Facebook posted: ${result.id}`);
+                }
+                catch (err) {
+
+                    newPost.platforms.facebook.status = 'failed';
+
+                    newPost.platforms.facebook.error =
+                        err.response?.data?.error?.message || err.message;
+
+                    console.error('❌ Facebook API Error:');
+                    console.error(err.response?.data || err.message);
                 }
             }
         }
@@ -228,26 +271,34 @@ const createPost = async(req,res)=>{
 
         // now save post into database 
         await newPost.save();
-        console.log(`💾 Post saved with status: ${newPost.overallStatus}`);    
-        
+        console.log(`💾 Post saved with status: ${newPost.overallStatus}`);
+
         // return response message
         const message = {
-            published:'Posted to LinkedIn  🎉',
-            failed:'Failed to Post on LinkedIn  ❌',
-            partial:'Post on Some Platform ⚠️'
+            published: 'Posted to LinkedIn  🎉',
+            failed: 'Failed to Post on LinkedIn  ❌',
+            partial: 'Post on Some Platform ⚠️'
         }
 
+
+        // sendinf response
         return res.status(201).json({
-            success:newPost.overallStatus !=='failed',
-            overallStatus:newPost.overallStatus,
-            message:message[newPost.overallStatus],
-            postId:newPost._id,
-            platforms:{
-                linkedin:{
-                    status:newPost.platforms.linkedin.status,
-                    postId:newPost.platforms.linkedin.postId,
-                    error:newPost.platforms.linkedin.error,
-                    postedAt:newPost.platforms.linkedin.postedAt
+            success: newPost.overallStatus !== 'failed',
+            overallStatus: newPost.overallStatus,
+            message: message[newPost.overallStatus],
+            postId: newPost._id,
+            platforms: {
+                linkedin: {
+                    status: newPost.platforms.linkedin.status,
+                    postId: newPost.platforms.linkedin.postId,
+                    error: newPost.platforms.linkedin.error,
+                    postedAt: newPost.platforms.linkedin.postedAt
+                },
+                facebook: {
+                    status: newPost.platforms.facebook.status,
+                    postId: newPost.platforms.facebook.postId,
+                    error: newPost.platforms.facebook.error,
+                    postedAt: newPost.platforms.facebook.postedAt
                 }
             }
 

@@ -6,7 +6,7 @@ const router = express.Router();
 router.get('/auth', authMiddleware.isValidUser, fbController.connectFacebook);
 router.get('/callback', fbController.facebookCallback);
 router.get('/disconnect', authMiddleware.isValidUser, fbController.disconnectFacebook);
-router.get('/status', authMiddleware.isValidUser, fbController.connectFacebook);
+router.get('/status', authMiddleware.isValidUser, fbController.facebookStatus);
 
 
 module.exports = router;
