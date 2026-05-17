@@ -50,6 +50,10 @@ route.post('/create-post',
     upload.single('image'),
     postController.createPost
 );
-
+route.post('/schedule-post',isValidUser.isValidUser,postController.schedulePost);
+route.delete('/cancel/schedule/:id',isValidUser.isValidUser,postController.cancelScheduledPost);
+route.get('/my-post', isValidUser.isValidUser,postController.getUserPosts);
+route.get('/scheduled-post',isValidUser.isValidUser,postController.getScheduledPosts);
+route.get('/schedule/:status',isValidUser.isValidUser,postController.getPostsByStatus)
 
 module.exports = route;
