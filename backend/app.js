@@ -31,7 +31,7 @@ app.use('/api/linkedin', linkedInRoute);
 app.use('/api/facebook',facebookRoute);
 
 // add this after your other middleware
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use('/swagger', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 
 module.exports = app;

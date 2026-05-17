@@ -2,6 +2,8 @@ const cron = require('node-cron');
 const postController = require('../controller/post.controllers');
 const userModel = require('../model/user.model');
 const postModel = require('../model/post.model');
+
+
 const startScheduler = () => {
 
     // run every minute
@@ -14,7 +16,6 @@ const startScheduler = () => {
         try {
 
             const now = new Date();
-
             // find all scheduled posts due
             const duePosts = await postModel.find({
                 overallStatus: 'draft',
@@ -22,12 +23,9 @@ const startScheduler = () => {
             });
 
             if (duePosts.length === 0) {
-
                 console.log('No Post Pending');
-
                 return;
             }
-
             console.log(
                 `📬 ${duePosts.length} post(s) due`
             );
