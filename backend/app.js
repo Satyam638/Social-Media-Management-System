@@ -9,6 +9,7 @@ const authRoute = require('../backend/routes/user.route');
 const postRoute = require('../backend/routes/post.route');
 const facebookRoute = require('../backend/platforms/facebook/facebookRoute');
 const linkedInRoute = require('../backend/platforms/linkedin/linkedinRoute');
+const aiServiceRoute = require('../backend/routes/ai.route');
 // permisssions
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -29,6 +30,7 @@ app.use('/api', authRoute);
 app.use('/api/posts', postRoute);
 app.use('/api/linkedin', linkedInRoute);
 app.use('/api/facebook',facebookRoute);
+app.use('/api/ai',aiServiceRoute);
 
 // add this after your other middleware
 app.use('/swagger', swaggerUi.serve, swaggerUi.setup(swaggerSpec));

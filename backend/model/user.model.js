@@ -48,7 +48,11 @@ const userSchema = mongoose.Schema({
             connectedAt: { type: Date, default: null }
         },
         instagram: {
+            // same user token as facebook user token becaise they follow same oauth
             accessToken: { type: String, default: null },
+            // instgram businees account id  different from FB page ID
+            instagramAccountId:{type:String,default:null},
+            instagramUsername:{type:String,default:false},
             isConnected: { type: Boolean, default: false },
             connectedAt: { type: Date, default: null }
         },

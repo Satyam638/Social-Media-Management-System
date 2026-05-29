@@ -9,7 +9,9 @@ const getFbAuthUrl =(userId)=>{
         'pages_show_list',  //to shee all pages
         'pages_read_engagement', // to read page data
         'pages_manage_posts', // to publish post on this page
-        'public_profile' // find user info
+        'public_profile', // find user info
+        'instagram_content_publish', //to publish content on instagram
+        'instagram_basic', //to find user info from instagram
     ].join(',');
 
     console.log('APP ID:', process.env.FACEBOOK_APP_ID);

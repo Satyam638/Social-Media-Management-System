@@ -1,7 +1,7 @@
 const postToFB = require('../facebook/facebookService');
 const fbAuth = require('../facebook/facebookAuth');
 const userModel = require('../../model/user.model');
-
+const instagramAuth = require('../instagram/instagramAuth');
 
 // lets connect to facebook
 const connectFacebook = async (req, res) => {
@@ -44,14 +44,43 @@ const facebookCallback = async (req, res) => {
         console.log('Page',page);
         console.log('Page id',page.id);
 
+        // ── Get Instagram account linked to this page ──────
+        let instagramAccountId   = null;
+        let instagramUsername    = null;
+
+        try{
+            instagramAccountId = await instagramAuth.getInstagramAccountId(page.id,page.access_token);
+            // now based on the id find insta profile data like username, image and more....
+            if(getInstagramAccountId)
+            {
+                const igProfile = await instagramAuth.getInstagramProfile(instagramAccountId,page.access_token);
+                instagramUsername = igProfile.username;
+                console.log(`✅ Instagram found: @${instagramUsername}`)
+            }
+        }
+        catch (err) {
+            // Instagram not linked — that's okay
+            // Facebook will still connect
+            console.log('No Instagram account linked to this page');
+        }
+
         // now update user information to DB
         await userModel.findByIdAndUpdate(userId, {
+            // facebook
             'platforms.facebook.accessToken': longToken,
             'platforms.facebook.pageToken': page.access_token,
             'platforms.facebook.pageName': page.name,
             'platforms.facebook.pageId': page.id,
             'platforms.facebook.isConnected': true, 
-            'platforms.facebook.connectedAt': new Date()
+            'platforms.facebook.connectedAt': new Date(),
+
+
+            // instagram
+            'platforms.instagram.accessToken':page.access_token,
+            'platforms.facebook.instagramAccountId':instagramAccountId,
+            'platforms.facebook.instagramUsername':instagramUsername,
+            'platforms.facebook.isConnected': !!instagramAccountId,
+            'platforms.facebook.connectedAt': instagramAccountId ? new Date(): null
         });
         console.log('Connected to Facebook Successfully !!')
         res.redirect(

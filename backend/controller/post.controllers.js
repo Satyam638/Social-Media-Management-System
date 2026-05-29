@@ -4,6 +4,7 @@ const { postLinkedIn } = require('../platforms/linkedin/linkedinController');
 // const {  } = require('../platforms/facebook/facebookController');
 const linkedinServices = require('../platforms/linkedin/linkedinService');
 const { postToFacebook } = require('../platforms/facebook/facebookService');
+const { postToInstagram } = require('../platforms/instagram/instgramService');
 const postValidation = require('../middleware/validation.middleware');
 const { default: axios } = require('axios');
 
@@ -126,55 +127,55 @@ const { default: axios } = require('axios');
 // }
 // }
 
-const schedulePost = async(req,res)=>{
+const schedulePost = async (req, res) => {
 
-    try{
-        const {platforms, scheduledAt} = req.body;
+    try {
+        const { platforms, scheduledAt } = req.body;
 
         const userId = req.user.id;
 
         // validate platforms
-        if(!scheduledAt){
+        if (!scheduledAt) {
             return res.status(400).json({
-                success:false,
-                error:"Schedule Timing Must Required"
+                success: false,
+                error: "Schedule Timing Must Required"
             });
         };
         // timing must be in future
-        if(new Date(scheduledAt) <= new Date()){
+        if (new Date(scheduledAt) <= new Date()) {
             return res.status(400).json({
-                success:false,
-                error:"scheduledAt must be a future date and time"
+                success: false,
+                error: "scheduledAt must be a future date and time"
             });
         };
         // validate platforms
         const validation = postValidation.validatePlatforms(platforms);
-        if(!validation){
+        if (!validation) {
             return res.status(400).json({
-                success:false,
-                error:validation.error,
-                errors:validation.errors
+                success: false,
+                error: validation.error,
+                errors: validation.errors
             });
         };
 
         // let's create drafted post into db 
         //  because is server or node-cron crashes still we have post which we try post again
         const draftPost = await postModel.create({
-        userId,
-        platforms,
-        overallStatus:'draft',
-        scheduledAt: new Date(scheduledAt)
-    });
-    console.log(`📅 Post scheduled: ${scheduledAt}`);
-    console.log(`   Post ID: ${draftPost._id}`);
+            userId,
+            platforms,
+            overallStatus: 'draft',
+            scheduledAt: new Date(scheduledAt)
+        });
+        console.log(`📅 Post scheduled: ${scheduledAt}`);
+        console.log(`   Post ID: ${draftPost._id}`);
 
-    return res.status(201).json({
-        sucess:true,
-        message:`Post scheduled for ${new Date(scheduledAt).toLocaleString()} 📅`,
-        overallStatus:"draft",
-        scheduledAt:draftPost.scheduledAt,
-        postId:draftPost._id
-    })
+        return res.status(201).json({
+            sucess: true,
+            message: `Post scheduled for ${new Date(scheduledAt).toLocaleString()} 📅`,
+            overallStatus: "draft",
+            scheduledAt: draftPost.scheduledAt,
+            postId: draftPost._id
+        })
     }
     catch (error) {
         console.error('schedulePost error:', error.message);
@@ -188,11 +189,12 @@ const publishToPlatforms = async (post, user) => {
 
     const platforms = post.platforms;
 
+    // posting to linkedin
     if (platforms.linkedin?.enabled) {
         console.log('📤 Attempting LinkedIn post...');
 
         if (!user.platforms?.linkedin?.isConnected) {
-                post.platforms.linkedin.status = 'failed',
+            post.platforms.linkedin.status = 'failed',
                 post.platforms.linkedin.error = 'LinkedIn not connected. ' + 'Visit /api/linkedin/auth first';
 
             console.log('❌ LinkedIn not connected');
@@ -246,9 +248,9 @@ const publishToPlatforms = async (post, user) => {
                     platforms.facebook.content
                 );
                 post.platforms.facebook.status = 'published',
-                post.platforms.facebook.postId = result.id,
-                post.platforms.facebook.postedAt = new Date(),
-                post.platforms.facebook.error = null;
+                    post.platforms.facebook.postId = result.id,
+                    post.platforms.facebook.postedAt = new Date(),
+                    post.platforms.facebook.error = null;
 
                 console.log(`✅ Facebook posted: ${result.id}`);
             }
@@ -263,6 +265,37 @@ const publishToPlatforms = async (post, user) => {
         }
     }
     // posting on instagram
+    if (post.platforms.instagram?.enabled) {
+        console.log('📤 Attempting Instagram post...')
+
+        if (!user.platforms?.instagram?.isConnected) {
+            post.platforms.instagram.status = 'failed',
+                post.platforms.instagram.err = 'Instagram is not Connected, Connected Facebook First then Instagram'
+            console.log('❌ Instagram not connected');
+        }
+
+        // it meanse connected so let's move to publish post
+        else {
+            try {
+                const result = await postToInstagram(
+                    user.platforms.instagram.accessToken,
+                    user.platforms.instagram.instagramAccountId,
+                    post.platforms.instagram.content
+                );
+                post.platforms.instagram.status = 'published',
+                    post.platforms.instagram.postId = result.id;
+                post.platforms.instagram.postedAt = new Date();
+                post.platforms.instagram.error = null;
+                console.log(`✅ Instagram posted: ${result.id}`);
+            }
+            catch (err) {
+                post.platforms.instagram.status = 'failed';
+                post.platforms.instagram.error =
+                    err.response?.data?.error?.message || err.message;
+                console.error('❌ Instagram failed:', err.response?.data || err.message);
+            }
+        }
+    }
 
     // posting on reddit
 
@@ -466,7 +499,7 @@ const getUserPosts = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            count:   posts.length,
+            count: posts.length,
             posts
         });
     } catch (error) {
@@ -478,7 +511,7 @@ const getUserPosts = async (req, res) => {
 const getPostsByStatus = async (req, res) => {
     try {
         const { status } = req.params;
-        const validStatuses = ['pending','published','partial','failed','draft'];
+        const validStatuses = ['pending', 'published', 'partial', 'failed', 'draft'];
 
         if (!validStatuses.includes(status)) {
             return res.status(400).json({
@@ -501,9 +534,9 @@ const getScheduledPosts = async (req, res) => {
     try {
         const posts = await postModel
             .find({
-                userId:        req.user.id,
+                userId: req.user.id,
                 overallStatus: 'draft',
-                scheduledAt:   { $gt: new Date() }
+                scheduledAt: { $gt: new Date() }
                 //               ↑ only future posts
             })
             .sort({ scheduledAt: 1 }); // earliest first
@@ -518,8 +551,8 @@ const getScheduledPosts = async (req, res) => {
 const cancelScheduledPost = async (req, res) => {
     try {
         const post = await postModel.findOne({
-            _id:           req.params.id,
-            userId:        req.user.id,
+            _id: req.params.id,
+            userId: req.user.id,
             // only allow cancelling draft posts
             overallStatus: 'draft'
         });
@@ -541,12 +574,12 @@ const cancelScheduledPost = async (req, res) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
-module.exports = { 
-    createPost, 
-    getUserPosts, 
-    getPostsByStatus, 
-    getScheduledPosts, 
-    cancelScheduledPost, 
-    publishToPlatforms, 
-    schedulePost 
+module.exports = {
+    createPost,
+    getUserPosts,
+    getPostsByStatus,
+    getScheduledPosts,
+    cancelScheduledPost,
+    publishToPlatforms,
+    schedulePost
 };
