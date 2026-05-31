@@ -12,6 +12,7 @@ const getFbAuthUrl =(userId)=>{
         'public_profile', // find user info
         'instagram_content_publish', //to publish content on instagram
         'instagram_basic', //to find user info from instagram
+        'business_management',
     ].join(',');
 
     console.log('APP ID:', process.env.FACEBOOK_APP_ID);
@@ -61,6 +62,8 @@ const getUserPages = async (longLivedToken) => {
             //        this is what we use to post!
         }
     });
+    console.log('Total pages found:', response.data.data.length);
+    console.log('Pages:', JSON.stringify(response.data.data, null, 2));
     return response.data.data;
     // returns array of pages:
     // [{ id: "123", name: "My Page", access_token: "PAGE_TOKEN" }]

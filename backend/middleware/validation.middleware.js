@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const userModel = require('../model/user.model');
-const {postToLinkedIn} = require('../platforms/linkedin/linkedinService')
+const { postToLinkedIn } = require('../platforms/linkedin/linkedinService')
 
 const isValidField = async (req, res, next) => {
 
@@ -68,13 +68,13 @@ const isValidUser = (req, res, next) => {
 };
 
 module.exports = { isValidUser };
-const isConnectedtoLinkedIn = async(req,res,next)=>{
-    try{
+const isConnectedtoLinkedIn = async (req, res, next) => {
+    try {
 
         const user = await userModel.findById(id);
 
-        if(!user.platforms.linkedin.isConnected) res.status(422).json({success:false,message:'Please Connect to PlatForm First'});
-        
+        if (!user.platforms.linkedin.isConnected) res.status(422).json({ success: false, message: 'Please Connect to PlatForm First' });
+
         console.log('Your Are Connected to Platform');
         next();
     } catch (err) {
@@ -84,13 +84,13 @@ const isConnectedtoLinkedIn = async(req,res,next)=>{
 }
 // characters define for each content length for consistency of platform oriented content
 const PLATFORM_LIMITS = {
-    linkedin:3000,
-    facebook:63000,
-    instagram:2200,
-    twitter:280
+    linkedin: 3000,
+    facebook: 63000,
+    instagram: 2200,
+    twitter: 280
 };
 
-const validatePlatforms = (platforms)=>{
+const validatePlatforms = (platforms,imageUrl =null) => {
     const errors = [];
 
     // get list of know platforms
@@ -98,20 +98,19 @@ const validatePlatforms = (platforms)=>{
 
     // check if any unknown platform was sent or not
 
-    Object.keys(platforms).forEach(platform =>{
-        if(!knownPlatforms.includes(platform)){
+    Object.keys(platforms).forEach(platform => {
+        if (!knownPlatforms.includes(platform)) {
             errors.push(`Unknown Platform : ${platform}`)
         }
     });
 
     // check is platform enabled(selected) or not
-    Object.entries(platforms).forEach(([platform,data]) => {
+    Object.entries(platforms).forEach(([platform, data]) => {
         // skip disabled platforms
-        if(!data.enabled) return;
+        if (!data.enabled) return;
 
         // if enabled then content of that platform must provided
-        if(!data.content || data.content.trim === '') 
-        {
+        if (!data.content || data.content.trim === '') {
             errors.push(`${platform}: content is not required when platform is enabled `);
             return;
         }
@@ -119,41 +118,43 @@ const validatePlatforms = (platforms)=>{
         // if content is provided then length of content should not more than defined
         const limit = PLATFORM_LIMITS[platform]
 
-        if(data.content.length>limit){
+        if (data.content.length > limit) {
             errors.push(
                 `${platform}: content is ${data.content.length} chars ` +
                 `but limit is ${limit} chars ` +
                 `(${data.content.length - limit} over limit)`
             );
         }
+
+        
     })
     return errors;
 };
 
-const deterMineOverallStatus = (platforms)=>{
+const deterMineOverallStatus = (platforms) => {
 
     // only get whose platfrom is selected
-    const selectedPlatforms = Object.values(platforms).filter(p=>p.enabled);
+    const selectedPlatforms = Object.values(platforms).filter(p => p.enabled);
 
     // check any selected or not
-    
-    if(selectedPlatforms.length === 0) return 'failed'
+
+    if (selectedPlatforms.length === 0) return 'failed'
 
     // now check status 
 
     // if every true then return published
-    const allPublished = selectedPlatforms.every(p=>p.status === 'published');
+    const allPublished = selectedPlatforms.every(p => p.status === 'published');
     // else return false 
-    const allFailed = selectedPlatforms.every(p=>p.status === 'failed');
+    const allFailed = selectedPlatforms.every(p => p.status === 'failed');
 
 
-    if(allPublished) return 'published';
+    if (allPublished) return 'published';
 
-    if(allFailed) return 'failed';
+    if (allFailed) return 'failed';
 
     return 'partial';
 };
 
 
 
-module.exports = { isValidField, isValidUser, isConnectedtoLinkedIn,validatePlatforms,deterMineOverallStatus};
+module.exports = { isValidField, isValidUser, isConnectedtoLinkedIn, validatePlatforms, deterMineOverallStatus };

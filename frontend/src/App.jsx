@@ -1,33 +1,20 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+// src/App.jsx
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import Register  from './pages/Register';
+import VerifyOTP from './pages/VerifyOTP';
+import Login     from './pages/Login';
+import Dashboard from './pages/Dashboard';
 
-import Navbar from "./components/Navbar";
-
-import Home from "./pages/Home";
-import Register from "./pages/Register";
-import Login from "./pages/Login";
-import VerifyOtp from "./pages/VerifyOtp";
-import Platforms from "./pages/Platforms";
-
-function App() {
-  return (
-    <BrowserRouter>
-
-      <Navbar />
-
-      <Routes>
-        <Route path="/" element={<Home />} />
-
-        <Route path="/register" element={<Register />} />
-
-        <Route path="/login" element={<Login />} />
-
-        <Route path="/verify-otp" element={<VerifyOtp />} />
-
-        <Route path="/platforms" element={<Platforms />} />
-      </Routes>
-
-    </BrowserRouter>
-  );
+export default function App() {
+    return (
+        <BrowserRouter>
+            <Routes>
+                <Route path='/'          element={<Navigate to='/login' />} />
+                <Route path='/register'  element={<Register />} />
+                <Route path='/verify'    element={<VerifyOTP />} />
+                <Route path='/login'     element={<Login />} />
+                <Route path='/dashboard' element={<Dashboard />} />
+            </Routes>
+        </BrowserRouter>
+    );
 }
-
-export default App;

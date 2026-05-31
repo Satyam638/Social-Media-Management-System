@@ -130,7 +130,7 @@ const { default: axios } = require('axios');
 const schedulePost = async (req, res) => {
 
     try {
-        const { platforms, scheduledAt } = req.body;
+        const { platforms, scheduledAt,imageUrl } = req.body;
 
         const userId = req.user.id;
 
@@ -149,7 +149,7 @@ const schedulePost = async (req, res) => {
             });
         };
         // validate platforms
-        const validation = postValidation.validatePlatforms(platforms);
+        const validation = postValidation.validatePlatforms(platforms,imageUrl);
         if (!validation) {
             return res.status(400).json({
                 success: false,
@@ -265,25 +265,31 @@ const publishToPlatforms = async (post, user) => {
         }
     }
     // posting on instagram
-    if (post.platforms.instagram?.enabled) {
+    if (platforms.instagram?.enabled) {
         console.log('📤 Attempting Instagram post...')
 
         if (!user.platforms?.instagram?.isConnected) {
             post.platforms.instagram.status = 'failed',
-                post.platforms.instagram.err = 'Instagram is not Connected, Connected Facebook First then Instagram'
+            post.platforms.instagram.err = 'Instagram is not Connected, Connected Facebook First then Instagram'
             console.log('❌ Instagram not connected');
         }
 
         // it meanse connected so let's move to publish post
         else {
             try {
+
+                console.log('ISTAGRAM PAGE TOKEN Same as Facebook Token:', user.platforms.instagram.accessToken);
+                console.log('Insta Account ID:', user.platforms.instagram.instagramAccountId);
+                console.log('Instagram Username:', platforms.instagram.instagramUsername);
+                console.log('Instagram CONTENT:', platforms.instagram.content);
+
                 const result = await postToInstagram(
                     user.platforms.instagram.accessToken,
                     user.platforms.instagram.instagramAccountId,
                     post.platforms.instagram.content
                 );
                 post.platforms.instagram.status = 'published',
-                    post.platforms.instagram.postId = result.id;
+                post.platforms.instagram.postId = result.id;
                 post.platforms.instagram.postedAt = new Date();
                 post.platforms.instagram.error = null;
                 console.log(`✅ Instagram posted: ${result.id}`);
@@ -314,7 +320,7 @@ const createPost = async (req, res) => {
     try {
         // get request 
 
-        const { platforms, scheduledAt } = req.body
+        const { platforms, scheduledAt,imageUrl } = req.body
         const userId = req.user.id;
 
         // check input is valid or not
@@ -338,7 +344,7 @@ const createPost = async (req, res) => {
 
         // now validate content as we define validation function in vlidation middleware, lets's check
 
-        const validationErrors = postValidation.validatePlatforms(platforms)
+        const validationErrors = postValidation.validatePlatforms(platforms,imageUrl)
 
         // if any error have then we will return error
         if (validationErrors.length > 0) {

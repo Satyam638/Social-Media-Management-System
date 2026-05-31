@@ -1,8 +1,9 @@
-import axios from "axios";
+// src/services/api.js
+import axios from 'axios';
 
-const api = axios.create({
-  baseURL: "http://localhost:3000/api",
-  withCredentials: true,
+const API = axios.create({
+    baseURL: 'http://localhost:3000',
+    withCredentials: true  // sends cookies automatically
 });
 
-export default api;
+export default API;

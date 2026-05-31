@@ -13,13 +13,13 @@ const getInstagramAccountId = async(pageId,pageToken)=>{
     );
     return response.data.instagram_business_account?.id;
 }
-const getInstagramProfile = async(getInstagramAccountId,pageToken) =>{
+const getInstagramProfile = async(instagramAccountId,pageToken) =>{
 
     const response = await axios.get(
         `https://graph.facebook.com/v19.0/${instagramAccountId}`,
         {
             params:{
-                fields: 'id.username',
+                fields: 'id,username',
                 access_token:pageToken
             }
         }
