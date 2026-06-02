@@ -1,10 +1,15 @@
-const ImageKit = require('imagekit');
+// const ImageKit = require("imagekit");
 
-const imagekit = new ImageKit({
+// const imagekit = new ImageKit({
+//   publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
+//   privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
+//   urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT,
+// });
 
-    publicKey:process.env.publicKey,
-    privateKey:process.env.privateKey,
-    urlEndpoint:process.env.urlEndpoint
-})
+// console.log({
+//   publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
+//   privateKey: process.env.IMAGEKIT_PRIVATE_KEY ? "FOUND" : "MISSING",
+//   urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT,
+// });
 
-module.exports = imagekit;
+// module.exports = imagekit;

@@ -1,28 +1,45 @@
-const aiService = require('../config/ai.service');
+const { generateCaptions } = require('../services/aiService');
 
-const generatePost = async (req, res) => {
-
+const generatePostCaptions = async (req, res) => {
     try {
-        const { topic, tone, platform } = req.body;
+        const { topic, tone, platforms } = req.body;  // ✅ platforms (plural)
 
-        if (!topic || !tone || !platform) return res.status(400).json({ success: false, message: "Tone, Topic and Pltform are required" });
+        if (!topic || topic.trim() === '') {
+            return res.status(400).json({ success: false, error: "Topic is required" });
+        }
+        if (!tone) {
+            return res.status(400).json({ success: false, error: "Tone is required" });
+        }
+        if (!platforms || !Array.isArray(platforms) || platforms.length === 0) {
+            return res.status(400).json({ success: false, error: "At least one platform is required" });
+        }
 
-        console.log('Lets generate Post Caption for You');
-        const generatedContent = await aiService.generateSocialPost(topic, tone, platform);
+        const validPlatforms = ['linkedin', 'facebook', 'instagram'];
+        const invalidPlatforms = platforms.filter(p => !validPlatforms.includes(p));  // ✅ fixed logic + dot
+        if (invalidPlatforms.length > 0) {
+            return res.status(400).json({ success: false, error: `Invalid platforms: ${invalidPlatforms.join(', ')}` });
+        }
 
+        const validTones = ['professional', 'casual', 'funny', 'inspirational', 'educational'];
+        if (!validTones.includes(tone)) {  // ✅ .includes() not ()
+            return res.status(400).json({ success: false, error: `Invalid tone. Must be: ${validTones.join(', ')}` });
+        }
+
+        console.log(`🤖 Generating captions for: "${topic}" | Tone: ${tone} | Platforms: ${platforms.join(', ')}`);  // ✅
+
+        const { results, errors } = await generateCaptions(topic, tone, platforms);
+        console.log('Result:',results);
         return res.status(200).json({
             success: true,
-            message: "Generate Post SuccessFully",
-            generatedContent 
+            message: "Captions generated successfully",
+            captions: results,
+            errors: Object.keys(errors).length > 0 ? errors : undefined
         });
+
     } catch (err) {
-
-        console.error('AI generation error:',err.message);
-        return res.status(500).json({
-            success: false,
-            error: 'AI generation failed'
-        });
+        console.error('AI generation error:', err.message);
+        return res.status(500).json({ success: false, error: 'AI failed to generate captions' });
     }
-}
+};
 
-module.exports = {generatePost};
+module.exports = { generatePostCaptions };

@@ -58,6 +58,14 @@ const PLATFORMS = [
     },
 ];
 
+const TONES = [
+    { key: 'professional',  label: '💼 Professional' },
+    { key: 'casual',        label: '😊 Casual' },
+    { key: 'funny',         label: '😂 Funny' },
+    { key: 'inspirational', label: '🌟 Inspirational' },
+    { key: 'educational',   label: '📚 Educational' },
+];
+
 export default function Dashboard() {
     const navigate = useNavigate();
 
@@ -92,6 +100,13 @@ export default function Dashboard() {
 
     const [posts,          setPosts]          = useState([]);
     const [postsLoading,   setPostsLoading]   = useState(false);
+
+    // ── AI Caption Generator states ────────────────────────
+    const [aiTopic,     setAiTopic]     = useState('');
+    const [aiTone,      setAiTone]      = useState('professional');
+    const [aiPlatforms, setAiPlatforms] = useState([]);
+    const [aiCaptions,  setAiCaptions]  = useState(null);
+    const [aiLoading,   setAiLoading]   = useState(false);
 
     // ── On load: check URL params + fetch status ───────────
     useEffect(() => {
@@ -255,6 +270,39 @@ export default function Dashboard() {
         if (tab === 'published')  fetchPosts('published');
     };
 
+    // ── Generate AI captions ───────────────────────────────
+    const handleGenerateCaptions = async () => {
+        if (!aiTopic.trim()) {
+            alert('Enter a topic first');
+            return;
+        }
+        if (aiPlatforms.length === 0) {
+            alert('Select at least one platform');
+            return;
+        }
+        try {
+            setAiLoading(true);
+            setAiCaptions(null);
+            const res = await API.post('/api/ai/generate-captions', {
+                topic:     aiTopic,
+                tone:      aiTone,
+                platforms: aiPlatforms
+            });
+            setAiCaptions(res.data.captions);
+        } catch (err) {
+            alert(err.response?.data?.error || 'Failed to generate captions');
+        } finally {
+            setAiLoading(false);
+        }
+    };
+
+    // ── Use AI caption — fills it into post composer ───────
+    const useCaption = (platform, caption) => {
+        setContent(prev => ({ ...prev, [platform]: caption }));
+        setSelected(prev => ({ ...prev, [platform]: true }));
+        alert(`Caption copied to ${platform} content box ✅`);
+    };
+
     return (
         <div className="min-h-screen bg-gray-50">
 
@@ -369,161 +417,292 @@ export default function Dashboard() {
 
                 {/* ── COMPOSE TAB ─────────────────────────── */}
                 {activeTab === 'compose' && (
-                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                        <h2 className="text-lg font-semibold text-gray-800 mb-6">Create Post</h2>
+                    <>
+                        {/* ── AI Caption Generator ──────────── */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+                            <h2 className="text-lg font-semibold text-gray-800 mb-4">
+                                🤖 AI Caption Generator
+                            </h2>
 
-                        {/* Platform selection */}
-                        <div className="mb-6">
-                            <p className="text-sm font-medium text-gray-700 mb-3">Post to:</p>
-                            <div className="flex flex-wrap gap-3">
-                                {PLATFORMS.filter(p => !p.comingSoon).map(p => {
-                                    const conn = connections[p.key];
-                                    const isSelected = selected[p.key];
-                                    return (
+                            {/* Topic input */}
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Topic or Idea
+                                </label>
+                                <input
+                                    type="text"
+                                    value={aiTopic}
+                                    onChange={e => setAiTopic(e.target.value)}
+                                    placeholder="e.g. We just launched our new product!"
+                                    className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-purple-500"
+                                />
+                            </div>
+
+                            {/* Tone selection */}
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Tone
+                                </label>
+                                <div className="flex flex-wrap gap-2">
+                                    {TONES.map(t => (
+                                        <button
+                                            key={t.key}
+                                            onClick={() => setAiTone(t.key)}
+                                            className={`px-4 py-2 rounded-lg text-sm border-2 transition ${
+                                                aiTone === t.key
+                                                    ? 'border-purple-500 bg-purple-50 text-purple-700 font-medium'
+                                                    : 'border-gray-200 text-gray-600'
+                                            }`}
+                                        >
+                                            {t.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Platform selection for AI */}
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Generate for Platforms
+                                </label>
+                                <div className="flex flex-wrap gap-2">
+                                    {PLATFORMS.filter(p => !p.comingSoon).map(p => (
                                         <label
                                             key={p.key}
                                             className={`flex items-center gap-2 cursor-pointer px-4 py-2 rounded-lg border-2 text-sm transition ${
-                                                isSelected
+                                                aiPlatforms.includes(p.key)
                                                     ? `${p.borderColor} ${p.bgColor} font-medium`
-                                                    : 'border-gray-200 bg-white'
-                                            } ${!conn.isConnected ? 'opacity-40 cursor-not-allowed' : ''}`}
+                                                    : 'border-gray-200'
+                                            }`}
                                         >
                                             <input
                                                 type="checkbox"
-                                                checked={isSelected}
-                                                disabled={!conn.isConnected}
-                                                onChange={() => togglePlatform(p.key)}
+                                                checked={aiPlatforms.includes(p.key)}
+                                                onChange={() => {
+                                                    setAiPlatforms(prev =>
+                                                        prev.includes(p.key)
+                                                            ? prev.filter(x => x !== p.key)
+                                                            : [...prev, p.key]
+                                                    );
+                                                }}
                                                 className="w-4 h-4"
                                             />
-                                            <span>{p.icon} {p.label}</span>
-                                            {!conn.isConnected && (
-                                                <span className="text-xs text-gray-400">(not connected)</span>
-                                            )}
+                                            {p.icon} {p.label}
                                         </label>
-                                    );
-                                })}
-                            </div>
-                        </div>
-
-                        {/* Content textareas — show only for selected platforms */}
-                        {PLATFORMS.filter(p => selected[p.key]).map(p => (
-                            <div key={p.key} className="mb-4">
-                                <div className="flex items-center justify-between mb-2">
-                                    <label className="text-sm font-medium text-gray-700">
-                                        {p.icon} {p.label} Content
-                                    </label>
-                                    <span className={`text-xs ${
-                                        content[p.key].length > p.charLimit * 0.9
-                                            ? 'text-red-500'
-                                            : 'text-gray-400'
-                                    }`}>
-                                        {content[p.key].length}/{p.charLimit}
-                                    </span>
+                                    ))}
                                 </div>
-                                <textarea
-                                    value={content[p.key]}
-                                    onChange={e => setContent(prev => ({ ...prev, [p.key]: e.target.value }))}
-                                    placeholder={p.placeholder}
-                                    maxLength={p.charLimit}
-                                    className={`w-full border-2 ${p.borderColor} p-4 rounded-xl h-32 outline-none focus:ring-2 focus:ring-blue-300 resize-none text-sm`}
-                                />
-                            </div>
-                        ))}
-
-                        {/* Image upload */}
-                        <div className="mb-6">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Image URL (required for Instagram)
-                            </label>
-                            <input
-                                type="text"
-                                value={image || ''}
-                                onChange={e => setImage(e.target.value)}
-                                placeholder="https://example.com/image.jpg"
-                                className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                            />
-                        </div>
-
-                        {/* Post mode toggle */}
-                        <div className="mb-6">
-                            <p className="text-sm font-medium text-gray-700 mb-3">When to post:</p>
-                            <div className="flex gap-3">
-                                {[
-                                    { key:'immediate', label:'🚀 Post Now' },
-                                    { key:'schedule',  label:'📅 Schedule' },
-                                ].map(mode => (
-                                    <button
-                                        key={mode.key}
-                                        onClick={() => setPostMode(mode.key)}
-                                        className={`px-5 py-2 rounded-lg text-sm font-medium border-2 transition ${
-                                            postMode === mode.key
-                                                ? 'border-blue-500 bg-blue-50 text-blue-700'
-                                                : 'border-gray-200 bg-white text-gray-600'
-                                        }`}
-                                    >
-                                        {mode.label}
-                                    </button>
-                                ))}
                             </div>
 
-                            {/* Date picker for scheduling */}
-                            {postMode === 'schedule' && (
-                                <div className="mt-3">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Schedule Date & Time
-                                    </label>
-                                    <input
-                                        type="datetime-local"
-                                        value={scheduledAt}
-                                        onChange={e => setScheduledAt(e.target.value)}
-                                        min={new Date().toISOString().slice(0,16)}
-                                        className="border border-gray-300 rounded-lg px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                                    />
+                            {/* Generate button */}
+                            <button
+                                onClick={handleGenerateCaptions}
+                                disabled={aiLoading}
+                                className={`w-full py-3 rounded-lg text-white font-semibold transition ${
+                                    aiLoading
+                                        ? 'bg-purple-300 cursor-not-allowed'
+                                        : 'bg-purple-600 hover:bg-purple-700'
+                                }`}
+                            >
+                                {aiLoading ? '🤖 Generating...' : '✨ Generate Captions'}
+                            </button>
+
+                            {/* Generated captions */}
+                            {aiCaptions && (
+                                <div className="mt-6 space-y-6">
+                                    {Object.entries(aiCaptions).map(([platform, captions]) => {
+                                        const p = PLATFORMS.find(pl => pl.key === platform);
+                                        return (
+                                            <div key={platform}>
+                                                <h3 className="font-semibold text-gray-800 mb-3">
+                                                    {p?.icon} {p?.label} Captions
+                                                </h3>
+                                                <div className="space-y-3">
+                                                    {captions.map(c => (
+                                                        <div
+                                                            key={c.id}
+                                                            className="border border-gray-200 rounded-xl p-4"
+                                                        >
+                                                            <p className="text-sm text-gray-700 mb-3">
+                                                                {c.caption}
+                                                            </p>
+                                                            <div className="flex items-center justify-between">
+                                                                <span className="text-xs text-gray-400">
+                                                                    {c.charCount} chars
+                                                                </span>
+                                                                <button
+                                                                    onClick={() => useCaption(platform, c.caption)}
+                                                                    className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition"
+                                                                >
+                                                                    Use This ✅
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             )}
                         </div>
 
-                        {/* Result message */}
-                        {postResult && (
-                            <div className={`mb-4 px-4 py-3 rounded-lg text-sm ${
-                                postResult.success
-                                    ? 'bg-green-50 border border-green-200 text-green-700'
-                                    : 'bg-red-50 border border-red-200 text-red-700'
-                            }`}>
-                                <p className="font-semibold">{postResult.message}</p>
-                                {postResult.platforms && (
-                                    <div className="mt-2 space-y-1">
-                                        {Object.entries(postResult.platforms).map(([key, val]) => (
-                                            val?.status && (
-                                                <p key={key} className="text-xs">
-                                                    {key}: {val.status === 'published' ? '✅' : '❌'} {val.status}
-                                                    {val.error && ` — ${val.error}`}
-                                                </p>
-                                            )
-                                        ))}
+                        {/* ── Post Composer ─────────────────── */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                            <h2 className="text-lg font-semibold text-gray-800 mb-6">Create Post</h2>
+
+                            {/* Platform selection */}
+                            <div className="mb-6">
+                                <p className="text-sm font-medium text-gray-700 mb-3">Post to:</p>
+                                <div className="flex flex-wrap gap-3">
+                                    {PLATFORMS.filter(p => !p.comingSoon).map(p => {
+                                        const conn = connections[p.key];
+                                        const isSelected = selected[p.key];
+                                        return (
+                                            <label
+                                                key={p.key}
+                                                className={`flex items-center gap-2 cursor-pointer px-4 py-2 rounded-lg border-2 text-sm transition ${
+                                                    isSelected
+                                                        ? `${p.borderColor} ${p.bgColor} font-medium`
+                                                        : 'border-gray-200 bg-white'
+                                                } ${!conn.isConnected ? 'opacity-40 cursor-not-allowed' : ''}`}
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    checked={isSelected}
+                                                    disabled={!conn.isConnected}
+                                                    onChange={() => togglePlatform(p.key)}
+                                                    className="w-4 h-4"
+                                                />
+                                                <span>{p.icon} {p.label}</span>
+                                                {!conn.isConnected && (
+                                                    <span className="text-xs text-gray-400">(not connected)</span>
+                                                )}
+                                            </label>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Content textareas — show only for selected platforms */}
+                            {PLATFORMS.filter(p => selected[p.key]).map(p => (
+                                <div key={p.key} className="mb-4">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <label className="text-sm font-medium text-gray-700">
+                                            {p.icon} {p.label} Content
+                                        </label>
+                                        <span className={`text-xs ${
+                                            content[p.key].length > p.charLimit * 0.9
+                                                ? 'text-red-500'
+                                                : 'text-gray-400'
+                                        }`}>
+                                            {content[p.key].length}/{p.charLimit}
+                                        </span>
+                                    </div>
+                                    <textarea
+                                        value={content[p.key]}
+                                        onChange={e => setContent(prev => ({ ...prev, [p.key]: e.target.value }))}
+                                        placeholder={p.placeholder}
+                                        maxLength={p.charLimit}
+                                        className={`w-full border-2 ${p.borderColor} p-4 rounded-xl h-32 outline-none focus:ring-2 focus:ring-blue-300 resize-none text-sm`}
+                                    />
+                                </div>
+                            ))}
+
+                            {/* Image upload */}
+                            <div className="mb-6">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Image URL (required for Instagram)
+                                </label>
+                                <input
+                                    type="text"
+                                    value={image || ''}
+                                    onChange={e => setImage(e.target.value)}
+                                    placeholder="https://example.com/image.jpg"
+                                    className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                            </div>
+
+                            {/* Post mode toggle */}
+                            <div className="mb-6">
+                                <p className="text-sm font-medium text-gray-700 mb-3">When to post:</p>
+                                <div className="flex gap-3">
+                                    {[
+                                        { key:'immediate', label:'🚀 Post Now' },
+                                        { key:'schedule',  label:'📅 Schedule' },
+                                    ].map(mode => (
+                                        <button
+                                            key={mode.key}
+                                            onClick={() => setPostMode(mode.key)}
+                                            className={`px-5 py-2 rounded-lg text-sm font-medium border-2 transition ${
+                                                postMode === mode.key
+                                                    ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                                    : 'border-gray-200 bg-white text-gray-600'
+                                            }`}
+                                        >
+                                            {mode.label}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {/* Date picker for scheduling */}
+                                {postMode === 'schedule' && (
+                                    <div className="mt-3">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            Schedule Date & Time
+                                        </label>
+                                        <input
+                                            type="datetime-local"
+                                            value={scheduledAt}
+                                            onChange={e => setScheduledAt(e.target.value)}
+                                            min={new Date().toISOString().slice(0,16)}
+                                            className="border border-gray-300 rounded-lg px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                                        />
                                     </div>
                                 )}
                             </div>
-                        )}
 
-                        {/* Publish button */}
-                        <button
-                            onClick={handlePublish}
-                            disabled={postLoading}
-                            className={`w-full py-3 rounded-xl text-white font-semibold text-base transition ${
-                                postLoading
-                                    ? 'bg-gray-400 cursor-not-allowed'
-                                    : 'bg-blue-600 hover:bg-blue-700'
-                            }`}
-                        >
-                            {postLoading
-                                ? 'Publishing...'
-                                : postMode === 'schedule'
-                                    ? '📅 Schedule Post'
-                                    : '🚀 Publish Now'
-                            }
-                        </button>
-                    </div>
+                            {/* Result message */}
+                            {postResult && (
+                                <div className={`mb-4 px-4 py-3 rounded-lg text-sm ${
+                                    postResult.success
+                                        ? 'bg-green-50 border border-green-200 text-green-700'
+                                        : 'bg-red-50 border border-red-200 text-red-700'
+                                }`}>
+                                    <p className="font-semibold">{postResult.message}</p>
+                                    {postResult.platforms && (
+                                        <div className="mt-2 space-y-1">
+                                            {Object.entries(postResult.platforms).map(([key, val]) => (
+                                                val?.status && (
+                                                    <p key={key} className="text-xs">
+                                                        {key}: {val.status === 'published' ? '✅' : '❌'} {val.status}
+                                                        {val.error && ` — ${val.error}`}
+                                                    </p>
+                                                )
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Publish button */}
+                            <button
+                                onClick={handlePublish}
+                                disabled={postLoading}
+                                className={`w-full py-3 rounded-xl text-white font-semibold text-base transition ${
+                                    postLoading
+                                        ? 'bg-gray-400 cursor-not-allowed'
+                                        : 'bg-blue-600 hover:bg-blue-700'
+                                }`}
+                            >
+                                {postLoading
+                                    ? 'Publishing...'
+                                    : postMode === 'schedule'
+                                        ? '📅 Schedule Post'
+                                        : '🚀 Publish Now'
+                                }
+                            </button>
+                        </div>
+                    </>
                 )}
 
                 {/* ── SCHEDULED / PUBLISHED TABS ──────────── */}

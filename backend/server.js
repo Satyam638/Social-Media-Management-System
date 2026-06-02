@@ -1,5 +1,5 @@
-console.log("1: Server file started");
 require('dotenv').config();
+console.log("1: Server file started");
 const {startScheduler} = require('../backend/config/scheduler');
 console.log("2: Env loaded");
 const app = require('./app');
