@@ -4,6 +4,8 @@ import Register  from './pages/Register';
 import VerifyOTP from './pages/VerifyOTP';
 import Login     from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import Analytics from './pages/Analytics';
+
 
 export default function App() {
     return (
@@ -14,6 +16,7 @@ export default function App() {
                 <Route path='/verify'    element={<VerifyOTP />} />
                 <Route path='/login'     element={<Login />} />
                 <Route path='/dashboard' element={<Dashboard />} />
+                <Route path='/analytics' element={<Analytics />} />
             </Routes>
         </BrowserRouter>
     );
