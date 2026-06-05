@@ -1,18 +1,31 @@
 require("dotenv").config();
 const express = require('express');
 const app = express();
+
+const helmet = require('helmet');
+const compression = require('compression');
+
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('../backend/config/swagger');
 const session = require('express-session');
+
 const authRoute = require('../backend/routes/user.route');
 const postRoute = require('../backend/routes/post.route');
 const analyticsRoute = require('../backend/routes/systemAnalytics.route');
 const facebookRoute = require('../backend/platforms/facebook/facebookRoute');
 const linkedInRoute = require('../backend/platforms/linkedin/linkedinRoute');
 const aiServiceRoute = require('../backend/routes/ai.route');
+
+//run for all routes
+const ratelimiter  = require('../backend/middleware/rateLimiter.middleware');
 // permisssions
+// use to set security headers
+app.use(helmet());
+app.use(compression());
+app.use(ratelimiter.generalLimiter);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({
@@ -34,6 +47,12 @@ app.use('/api/linkedin', linkedInRoute);
 app.use('/api/facebook',facebookRoute);
 app.use('/api/ai',aiServiceRoute);
 app.use('/api/analytics',analyticsRoute);
+
+// global error handler
+app.use((err,req,res,next) =>{
+  console.log('Unhandled Error:',err);
+  res.status(500).json({success:false,message:"Internal Server Error"});
+})
 
 // add this after your other middleware
 app.use('/swagger', swaggerUi.serve, swaggerUi.setup(swaggerSpec));

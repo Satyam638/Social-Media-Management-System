@@ -138,15 +138,39 @@ const loginUser = async (req, res) => {
     console.log("TOKEN:", token);
 
     return res.status(200).json({
-      success:true,
-      message:"Logged In Successfully, Lets's create Post for you"
+      success: true,
+      message: "Logged In Successfully, Lets's create Post for you"
     });
   } catch (error) {
     console.log(error);
     return res.status(500).send("Internal Server Error");
   }
 };
-const getAlluser = async(req,res)=>{
-  
+const getAlluser = async (req, res) => {
+
 }
-module.exports = { registerUser, verifyOtp, loginUser };
+const forgotPassword = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // find user in email 
+    const isEmailExist = await userModel.findOne({email});
+    if (!isEmailExist) return res.status(400).json({ success: false, message: "User Not Exist" }); 
+
+    // convert password into hash password then store
+
+    const hashpassword  = await bcryptjs.hash(password,12);
+
+    // now update password into system
+    isEmailExist.password = hashpassword;
+    await isEmailExist.save();
+    console.log('Password changed successfully');
+    return res.status(200).json({success:true,message:"Updated Password Successfully"});
+  } 
+  catch (error) {
+    console.log(error);
+    return res.status(500).send("Internal Server Error");
+  }
+
+}
+module.exports = { registerUser, verifyOtp, loginUser, forgotPassword };

@@ -3,6 +3,9 @@ const route = express.Router();
 const authController = require('../controller/auth.controllers');
 const validation = require('../middleware/validation.middleware');
 const upload = require('../config/upload');
+const {sanitizeAll} = require('../middleware/sanitize.middleware');
+const inputValidation = require('../middleware/inputValidation.middleware')
+const rateLimiter = require('../middleware/rateLimiter.middleware');
 /**
  * @swagger
  * tags:
@@ -10,6 +13,8 @@ const upload = require('../config/upload');
  *   description: User authentication APIs
  */
 
+// run for all routes
+route.use(sanitizeAll);
 
 /**
  * @swagger
@@ -59,11 +64,9 @@ const upload = require('../config/upload');
  */
 route.post(
     '/auth/register',
-
+    rateLimiter.regLimiter,
+    inputValidation.validateRegister,
     upload.single('profileImage'),
-
-    validation.isValidField,
-
     authController.registerUser
 );
 
@@ -107,7 +110,7 @@ route.post(
  */
 route.post(
     '/auth/verify-otp',
-
+    inputValidation.validateOTP,
     authController.verifyOtp
 );
 
@@ -151,8 +154,10 @@ route.post(
  */
 route.post(
     '/auth/login',
-
+    rateLimiter.authLimiter,
+    inputValidation.validateLogin,
     authController.loginUser
 );
+// route.post('/auth/forgot-password',authController.forgotPassword);
 
 module.exports = route;

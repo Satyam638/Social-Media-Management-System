@@ -90,7 +90,12 @@ const postSchema = mongoose.Schema({
     // ───────────────────────────────────────────────────────
 },{
     timestamps:true
-})
+});
+// index to improve the query performance
+postSchema.index({userId:1});
+postSchema.index({userId:1,overallStatus:1});
+postSchema.index({userId:1,createdAt:-1});
+postSchema.index({overallStatus:1,scheduledAt:1});
 
 const postModel = mongoose.model('post',postSchema);
 module.exports = postModel;

@@ -110,6 +110,9 @@ export default function Register() {
                     Already have an account?{' '}
                     <Link to="/login" className="text-blue-600 hover:underline font-medium">Login</Link>
                 </p>
+                <p className="text-center text-sm text-gray-500 mt-4">
+                    <Link to="/forgot-password" className="text-blue-600 hover:underline font-medium">Forgot Password</Link>
+                </p>
             </div>
         </div>
     );

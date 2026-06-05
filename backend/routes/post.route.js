@@ -3,7 +3,12 @@ const route = express.Router();
 const postController = require('../controller/post.controllers');
 const isValidUser = require('../middleware/validation.middleware');
 const upload = require('../config/upload');
+const inputValidation = require('../middleware/inputValidation.middleware');
+const {sanitizeAll} = require('../middleware/sanitize.middleware');
+const rateLimitter  = require('../middleware/rateLimiter.middleware');
 
+
+route.use(sanitizeAll);
 /**
  * @swagger
  * /api/posts/create-post:
@@ -54,6 +59,8 @@ const upload = require('../config/upload');
  */
 route.post('/create-post',
     isValidUser.isValidUser, // tocheck is user logged in or not
+    rateLimitter.postLimiter,
+    inputValidation.validateCreatePost,
     upload.single('image'),
     postController.createPost
 );
@@ -89,7 +96,10 @@ route.post('/create-post',
  *       201:
  *         description: Post scheduled successfully
  */
-route.post('/schedule-post',isValidUser.isValidUser,postController.schedulePost);
+route.post('/schedule-post',isValidUser.isValidUser,
+    rateLimitter.postLimiter,
+    inputValidation.validateCreatePost,
+    postController.schedulePost);
 /**
  * @swagger
  * /api/posts/cancel/schedule/{id}:
