@@ -158,6 +158,9 @@ route.post(
     inputValidation.validateLogin,
     authController.loginUser
 );
-// route.post('/auth/forgot-password',authController.forgotPassword);
+route.post('/auth/forgot-password',
+    rateLimiter.authLimiter,
+    inputValidation.validateForgotPassword,
+    authController.forgotPassword);
 
 module.exports = route;

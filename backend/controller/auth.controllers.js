@@ -158,7 +158,6 @@ const forgotPassword = async (req, res) => {
     if (!isEmailExist) return res.status(400).json({ success: false, message: "User Not Exist" }); 
 
     // convert password into hash password then store
-
     const hashpassword  = await bcryptjs.hash(password,12);
 
     // now update password into system

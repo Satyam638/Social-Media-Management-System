@@ -135,4 +135,6 @@ router.get(
     linkedInController.checkPostStatus
 );
 
+router.patch('/disconnect',authenticate.isValidUser,linkedInController.disconnectLinkedin)
+
 module.exports = router;

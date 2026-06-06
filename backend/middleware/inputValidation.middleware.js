@@ -164,12 +164,30 @@ const validateGenerateCaptions = validate([
     body('plafforms.*')
     .isIn(['linkedin','facebook','instagram','twitter'])
     .withMessage('Invalid platform name')
-])
+]);
+
+const validateForgotPassword = validate([
+    body('email')
+        .trim()
+        .notEmpty()
+        .withMessage('Email is required')
+        .isEmail()
+        .withMessage('Invalid email format'),
+
+    body('password')
+        .notEmpty()
+        .withMessage('New password is required')
+        .isLength({ min: 8 })
+        .withMessage('Password must be at least 8 characters')
+        .matches(/\d/)
+        .withMessage('Password must contain at least one number'),
+]);
 
 module.exports = {
     validateRegister,
     validateLogin,
     validateOTP,
+    validateForgotPassword,
     validateGenerateCaptions,
     validateCreatePost
 }

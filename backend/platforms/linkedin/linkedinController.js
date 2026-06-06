@@ -103,6 +103,27 @@ const checkPostStatus = async (req, res) => {
     }
 };
 
+const disconnectLinkedin = async (req, res) => {
+    try {
+        await User.findByIdAndUpdate(req.user.id, {
+            'platforms.linkedin.accessToken': null,
+            'platforms.linkedin.pageToken': null,
+            'platforms.linkedin.pageId': null,
+            'platforms.linkedin.pageName': null,
+            'platforms.linkedin.isConnected': false,
+            'platforms.linkedin.connectedAt': null
+        });
+        return res.json(
+            { 
+                success: true, 
+                message: 'Linkedin disconnected' 
+            }
+        );
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
 module.exports = {
-    linkedinLogin, LinkedInRedirectWithCode, postLinkedIn, checkPostStatus
+    linkedinLogin, LinkedInRedirectWithCode, postLinkedIn, checkPostStatus, disconnectLinkedin
 }

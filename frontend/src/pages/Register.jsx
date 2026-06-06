@@ -36,7 +36,7 @@ export default function Register() {
 
                 {/* Header */}
                 <div className="text-center mb-8">
-                    <h1 className="text-3xl font-bold text-gray-800">SMMS</h1>
+                    <h1 className="text-3xl font-bold text-gray-800">OneSocial</h1>
                     <p className="text-gray-500 mt-1">Social Media Management System</p>
                     <h2 className="text-xl font-semibold text-gray-700 mt-4">Create Account</h2>
                 </div>

@@ -116,5 +116,7 @@ router.get(
     fbController.facebookStatus
 );
 
+router.patch('/disconnect',authMiddleware.isValidUser,fbController.disconnectFacebook);
+
 
 module.exports = router;

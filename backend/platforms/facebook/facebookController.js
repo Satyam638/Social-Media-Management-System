@@ -134,9 +134,16 @@ const disconnectFacebook = async (req, res) => {
             'platforms.facebook.pageId': null,
             'platforms.facebook.pageName': null,
             'platforms.facebook.isConnected': false,
-            'platforms.facebook.connectedAt': null
+            'platforms.facebook.connectedAt': null,
+
+
+            'platforms.instagram.instagramAccountId':null,
+            'platforms.instagram.instagramUsername':null,
+            'platforms.instagram.isConnected':null,
+            'platforms.instagram.connectedAt':null,
+
         });
-        res.json({ success: true, message: 'Facebook disconnected' });
+        res.json({ success: true, message: 'Facebook and Instagram Disconnected' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

@@ -5,9 +5,9 @@ import API from '../services/api';
 
 export default function Login() {
     const navigate = useNavigate();
-    const [form, setForm]       = useState({ email:'', password:'' });
+    const [form, setForm] = useState({ email: '', password: '' });
     const [loading, setLoading] = useState(false);
-    const [error, setError]     = useState('');
+    const [error, setError] = useState('');
 
     const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -40,7 +40,7 @@ export default function Login() {
 
                 {/* Header */}
                 <div className="text-center mb-8">
-                    <h1 className="text-3xl font-bold text-gray-800">SMMS</h1>
+                    <h1 className="text-3xl font-bold text-gray-800">OneSocial</h1>
                     <p className="text-gray-500 mt-1">Social Media Management System</p>
                     <h2 className="text-xl font-semibold text-gray-700 mt-4">Welcome Back</h2>
                 </div>
@@ -78,14 +78,22 @@ export default function Login() {
                             className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
                     </div>
+                    {/* // In Login.jsx — add after password input div */}
+                    <div className="flex justify-end">
+                        <Link
+                            to="/forgot-password"
+                            className="text-sm text-blue-600 hover:underline"
+                        >
+                            Forgot Password?
+                        </Link>
+                    </div>
                 </div>
 
                 <button
                     onClick={handleLogin}
                     disabled={loading}
-                    className={`w-full mt-6 py-3 rounded-lg text-white font-semibold transition ${
-                        loading ? 'bg-blue-300 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
-                    }`}
+                    className={`w-full mt-6 py-3 rounded-lg text-white font-semibold transition ${loading ? 'bg-blue-300 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+                        }`}
                 >
                     {loading ? 'Logging in...' : 'Login'}
                 </button>
