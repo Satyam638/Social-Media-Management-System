@@ -1,6 +1,6 @@
 require('dotenv').config();
 console.log("1: Server file started");
-const {startScheduler} = require('../backend/config/scheduler');
+const { createWorker } = require('../backend/config/worker');
 console.log("2: Env loaded");
 const app = require('./app');
 console.log("3: App loaded");
@@ -13,9 +13,7 @@ const runServer = async () => {
     console.log("5: DB Connected, starting server...");
     app.listen(PORT, () => {
       console.log(`6: Server running on http://localhost:${PORT}`);
-
-      startScheduler();
-      console.log('7: Scheduler Starts Running Forver for every minute');
+      createWorker();
     });
 
   } catch (error) {

@@ -162,5 +162,5 @@ route.post('/auth/forgot-password',
     rateLimiter.authLimiter,
     inputValidation.validateForgotPassword,
     authController.forgotPassword);
-
+route.get('/auth/me', validation.isValidUser, authController.getMe);
 module.exports = route;

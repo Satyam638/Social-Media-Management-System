@@ -5,6 +5,22 @@ const app = express();
 const helmet = require('helmet');
 const compression = require('compression');
 
+const { createBullBoard }    = require('@bull-board/api');
+const { BullMQAdapter }      = require('@bull-board/api/bullMQAdapter');
+const { ExpressAdapter }     = require('@bull-board/express');
+const { postQueue }          = require('../backend/config/queue');
+
+const serverAdapter = new ExpressAdapter();
+serverAdapter.setBasePath('admin/queues');
+
+createBullBoard({
+  queues:[new BullMQAdapter(postQueue)],
+  serverAdapter
+});
+
+app.use('/admin/queues', serverAdapter.getRouter());
+// goto http://localhost:3000/admin/queues to see all jobs visually
+
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 

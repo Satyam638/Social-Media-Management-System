@@ -66,8 +66,6 @@ const isValidUser = (req, res, next) => {
         });
     }
 };
-
-module.exports = { isValidUser };
 const isConnectedtoLinkedIn = async (req, res, next) => {
     try {
 

@@ -215,7 +215,7 @@ route.get(
  *         description: Unauthorized
  */
 route.get(
-    '/schedule/:status',
+    '/status/:status',
     isValidUser.isValidUser,
     postController.getPostsByStatus
 );

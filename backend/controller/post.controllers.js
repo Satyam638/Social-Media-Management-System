@@ -1,5 +1,6 @@
 const postModel = require('../model/post.model');
 const userModel = require('../model/user.model');
+const { postQueue } = require('../config/queue');
 const { postLinkedIn } = require('../platforms/linkedin/linkedinController');
 // const {  } = require('../platforms/facebook/facebookController');
 const linkedinServices = require('../platforms/linkedin/linkedinService');
@@ -166,14 +167,32 @@ const schedulePost = async (req, res) => {
             overallStatus: 'draft',
             scheduledAt: new Date(scheduledAt)
         });
-        console.log(`📅 Post scheduled: ${scheduledAt}`);
-        console.log(`   Post ID: ${draftPost._id}`);
+
+        // add job into queue with the delay 
+        const now = new Date();
+        const scheduledDate = new Date(scheduledAt)
+        const delay = scheduledDate.getTime() - now.getTime();
+
+        // let's add job into queue with delay
+        const job = await postQueue.add('publish-post',{
+            postId:draftPost._id.toString(),
+            userId:userId.toString()
+        },
+        {
+            delay,
+            jobId:`post-${draftPost._id}`,
+        }
+    );
+    console.log(`📅 Job added to queue: ${job.id}`);
+    console.log(`   Runs at: ${scheduledDate.toISOString()}`);
+    console.log(`   Delay:   ${Math.round(delay / 1000 / 60)} minutes`);
 
         return res.status(201).json({
             sucess: true,
             message: `Post scheduled for ${new Date(scheduledAt).toLocaleString()} 📅`,
             overallStatus: "draft",
             scheduledAt: draftPost.scheduledAt,
+            jobId:job.id,
             postId: draftPost._id
         })
     }
@@ -185,6 +204,49 @@ const schedulePost = async (req, res) => {
         });
     }
 }
+
+const cancelScheduledPost = async (req, res) => {
+    try {
+        const post = await postModel.findOne({
+            _id:           req.params.id,
+            userId:        req.user.id,
+            overallStatus: 'draft'
+        });
+
+        if (!post) {
+            return res.status(404).json({
+                success: false,
+                error: 'Scheduled post not found'
+            });
+        }
+
+        // ── Remove job from BullMQ ─────────────────────────
+        const jobId = `post-${post._id}`;
+        const job   = await postQueue.getJob(jobId);
+
+        if (job) {
+            await job.remove();
+            // ↑ removes job from Redis queue
+            console.log(`🗑️ Job removed from queue: ${jobId}`);
+        }
+
+        // ── Delete post from MongoDB ───────────────────────
+        await postModel.findByIdAndDelete(req.params.id);
+
+        return res.status(200).json({
+            success: true,
+            message: 'Scheduled post cancelled ✅'
+        });
+
+    } catch (error) {
+        console.error('cancelScheduledPost error:', error);
+        return res.status(500).json({
+            success: false,
+            error: 'Internal Server Error'
+        });
+    }
+};
+
 const publishToPlatforms = async (post, user) => {
 
     const platforms = post.platforms;
@@ -516,7 +578,7 @@ const getUserPosts = async (req, res) => {
 // get posts by overall status
 const getPostsByStatus = async (req, res) => {
     try {
-        const { status } = req.params;
+        const status = req.params.status;
         const validStatuses = ['pending', 'published', 'partial', 'failed', 'draft'];
 
         if (!validStatuses.includes(status)) {
@@ -548,34 +610,6 @@ const getScheduledPosts = async (req, res) => {
             .sort({ scheduledAt: 1 }); // earliest first
 
         res.status(200).json({ success: true, count: posts.length || 'No Scheduled Post', posts });
-    } catch (error) {
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-};
-
-// cancel a scheduled post
-const cancelScheduledPost = async (req, res) => {
-    try {
-        const post = await postModel.findOne({
-            _id: req.params.id,
-            userId: req.user.id,
-            // only allow cancelling draft posts
-            overallStatus: 'draft'
-        });
-
-        if (!post) {
-            return res.status(404).json({
-                success: false,
-                error: 'Scheduled post not found or already published'
-            });
-        }
-
-        await postModel.findByIdAndDelete(req.params.id);
-
-        res.status(200).json({
-            success: true,
-            message: 'Scheduled post cancelled ✅'
-        });
     } catch (error) {
         res.status(500).json({ error: 'Internal Server Error' });
     }

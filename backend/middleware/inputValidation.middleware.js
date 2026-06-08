@@ -143,27 +143,36 @@ const validateCreatePost = validate([
 // AI POST GENERATION 
 const validateGenerateCaptions = validate([
     body('topic')
-    .trim()
-    .notEmpty()
-    .withMessage('Topic is required')
-    .isLength({min:3,max:500})
-    .withMessage('Topic must be 3-500 characters'),
+        .trim()
+        .notEmpty()
+        .withMessage('Topic is required')
+        .isLength({ min: 3, max: 500 })
+        .withMessage('Topic must be 3-500 characters'),
 
     body('tone')
-    .notEmpty()
-    .withMessage('Tone is required')
-    .isIn(['professional','casual','funny','educational','inspirational'])
-    .withMessage('Invalid Tone'),
+        .notEmpty()
+        .withMessage('Tone is required')
+        .isIn([
+            'professional',
+            'casual',
+            'funny',
+            'educational',
+            'inspirational'
+        ])
+        .withMessage('Invalid Tone'),
 
     body('platforms')
-    .notEmpty()
-    .withMessage('Platforms Array is required')
-    .isLength({min:1,max:4})
-    .withMessage('Platforms must be an array with 1-4 items'),
+        .isArray({ min: 1, max: 4 })
+        .withMessage('Platforms must be an array with 1-4 items'),
 
-    body('plafforms.*')
-    .isIn(['linkedin','facebook','instagram','twitter'])
-    .withMessage('Invalid platform name')
+    body('platforms.*')
+        .isIn([
+            'linkedin',
+            'facebook',
+            'instagram',
+            'twitter'
+        ])
+        .withMessage('Invalid platform name')
 ]);
 
 const validateForgotPassword = validate([

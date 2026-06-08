@@ -7,7 +7,8 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Analytics from './pages/Analytics';
 import ForgotPassword from "./pages/ForgotPassword";
-
+import ProtectedRoute from './components/ProtectedRoute';
+import HowToUse       from './pages/HowToUse';
 
 export default function App() {
     return (
@@ -17,10 +18,24 @@ export default function App() {
                 <Route path='/register' element={<Register />} />
                 <Route path='/verify' element={<VerifyOTP />} />
                 <Route path='/login' element={<Login />} />
-                <Route path='/dashboard' element={<Dashboard />} />
-                <Route path='/analytics' element={<Analytics />} />
-                <Route path="/forgot-password" element={<ForgotPassword />}
-                />
+                <Route path="/how-to-use" element={<HowToUse />} />
+                {/* <Route path='/dashboard' element={<Dashboard />} /> */}
+                {/* <Route path='/analytics' element={<Analytics />} /> */}
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                {/* Protected routes — must be logged in */}
+                <Route path='/dashboard' element={
+                    <ProtectedRoute>
+                        <Dashboard />
+                    </ProtectedRoute>
+                } />
+                <Route path='/analytics' element={
+                    <ProtectedRoute>
+                        <Analytics />
+                    </ProtectedRoute>
+                } />
+
+                {/* Catch all — redirect to home */}
+                <Route path='*' element={<Navigate to='/' />} />
             </Routes>
         </BrowserRouter>
     );

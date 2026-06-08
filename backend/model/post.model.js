@@ -50,6 +50,10 @@ const platformSchema = {
         default: null
         // exact timestamp when post went live
         // useful for analytics later
+    },
+    imageUrl:{
+        type:String,
+        default:''
     }
 };
 
