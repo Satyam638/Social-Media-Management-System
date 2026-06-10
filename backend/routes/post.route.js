@@ -61,7 +61,7 @@ route.post('/create-post',
     isValidUser.isValidUser, // tocheck is user logged in or not
     rateLimitter.postLimiter,
     inputValidation.validateCreatePost,
-    upload.single('image'),
+    // upload.single('image'),
     postController.createPost
 );
 /**
@@ -96,7 +96,13 @@ route.post('/create-post',
  *       201:
  *         description: Post scheduled successfully
  */
-route.post('/schedule-post',isValidUser.isValidUser,
+route.post('/schedule-post',
+     (req, res, next) => {
+        console.log('BODY RECEIVED:');
+        console.log(JSON.stringify(req.body, null, 2));
+        next();
+    },
+    isValidUser.isValidUser,
     rateLimitter.postLimiter,
     inputValidation.validateCreatePost,
     postController.schedulePost);

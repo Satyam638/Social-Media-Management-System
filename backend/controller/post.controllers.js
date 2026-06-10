@@ -130,6 +130,10 @@ const { default: axios } = require('axios');
 
 const schedulePost = async (req, res) => {
 
+    console.log(
+  JSON.stringify(req.body, null, 2)
+);
+
     try {
         const { platforms, scheduledAt,imageUrl } = req.body;
 
@@ -150,12 +154,11 @@ const schedulePost = async (req, res) => {
             });
         };
         // validate platforms
-        const validation = postValidation.validatePlatforms(platforms,imageUrl);
-        if (!validation) {
+        const validationErrors  = postValidation.validatePlatforms(platforms,imageUrl);
+        if (!validationErrors.length > 0) {
             return res.status(400).json({
                 success: false,
-                error: validation.error,
-                errors: validation.errors
+                errors: validationErrors
             });
         };
 
@@ -268,7 +271,8 @@ const publishToPlatforms = async (post, user) => {
                 const result = await postLinkedIn(
                     user.platforms.linkedin.accessToken,
                     user.platforms.linkedin.personUrn,
-                    platforms.linkedin.content
+                    platforms.linkedin.content,
+                    platforms.linkedin.imageUrl || null
                 );
 
                 // update status after post
@@ -295,7 +299,7 @@ const publishToPlatforms = async (post, user) => {
 
         if (!user.platforms?.facebook?.isConnected) {
             post.platforms.facebook.status = 'failed';
-            post.platforms.facebook.err = 'Facebook Not Connected Visit /api/facebook/auth first';
+            post.platforms.facebook.error = 'Facebook Not Connected Visit /api/facebook/auth first';
             console.log('Facebook Not Connected');
         }
 
@@ -307,7 +311,8 @@ const publishToPlatforms = async (post, user) => {
                 const result = await postToFacebook(
                     user.platforms.facebook.pageToken,
                     user.platforms.facebook.pageId,
-                    platforms.facebook.content
+                    platforms.facebook.content,
+                    platforms.facebook.imageUrl || null
                 );
                 post.platforms.facebook.status = 'published',
                     post.platforms.facebook.postId = result.id,
@@ -335,6 +340,11 @@ const publishToPlatforms = async (post, user) => {
             post.platforms.instagram.err = 'Instagram is not Connected, Connected Facebook First then Instagram'
             console.log('❌ Instagram not connected');
         }
+        // if image not provided return return 
+        else if(!platforms.instagram?.imageUrl){
+            post.platforms.instagram.status='failed',
+            post.platforms.instagram.error='Instagram requires an image'
+        }
 
         // it meanse connected so let's move to publish post
         else {
@@ -348,7 +358,8 @@ const publishToPlatforms = async (post, user) => {
                 const result = await postToInstagram(
                     user.platforms.instagram.accessToken,
                     user.platforms.instagram.instagramAccountId,
-                    post.platforms.instagram.content
+                    platforms.instagram.content,
+                    platforms.instagram.imageUrl
                 );
                 post.platforms.instagram.status = 'published',
                 post.platforms.instagram.postId = result.id;
@@ -382,7 +393,7 @@ const createPost = async (req, res) => {
     try {
         // get request 
 
-        const { platforms, scheduledAt,imageUrl } = req.body
+        const { platforms, scheduledAt, imageUrl } = req.body
         const userId = req.user.id;
 
         // check input is valid or not
@@ -406,7 +417,9 @@ const createPost = async (req, res) => {
 
         // now validate content as we define validation function in vlidation middleware, lets's check
 
-        const validationErrors = postValidation.validatePlatforms(platforms,imageUrl)
+         console.log("PLATFORMS RECEIVED:",JSON.stringify(platforms, null, 2));
+
+        const validationErrors = postValidation.validatePlatforms(platforms);
 
         // if any error have then we will return error
         if (validationErrors.length > 0) {
@@ -417,6 +430,7 @@ const createPost = async (req, res) => {
                 // so user can fix everything in one go
             });
         }
+
 
         // now lets fetch access token from user's model
 
@@ -434,6 +448,7 @@ const createPost = async (req, res) => {
             userId,
             platforms,
             overallStatus: 'pending',
+            imageUrl: imageUrl || '',
             scheduledAt: scheduledAt || null
         });
         console.log(`📝 Post created in DB: ${newPost._id}`);

@@ -2,6 +2,8 @@ const {body, params, validationResult} = require('express-validator');
 
 
 
+
+
 const validate =(validations) =>{
     return async(req,res,next) =>{
         // check validation for each request where validation applied
@@ -11,6 +13,8 @@ const validate =(validations) =>{
 
         // store error for failed validation
         const errors = validationResult(req);
+        console.log('VALIDATION ERRORS:');
+console.log(JSON.stringify(errors.array(), null, 2));
         if(errors.isEmpty()) {
             return next() // no error so move to controller
         }
@@ -104,23 +108,23 @@ const validateCreatePost = validate([
     .isObject()
     .withMessage('Platforms must be an object'),
 
-    body('plaforms.linkedin.content')
+    body('platforms.linkedin.content')
     .optional()
     .notEmpty()
     .withMessage('Linkedin content must be a string').
     isLength({max:3000})
     .withMessage("Linkeidn content length cannot exceed 3000 characters"),
 
-    body('plaforms.facebook.content')
+    body('platforms.facebook.content')
     .optional()
     .notEmpty()
     .withMessage('Facebook content must be a string').
     isLength({max:63000})
     .withMessage("Facebook content length cannot exceed 63000 characters"),
 
-    body('plaforms.instagram.content')
+    body('platforms.instagram.content')
     .optional()
-    .notEmpty()
+    .isString()
     .withMessage('Instagram content must be a string').
     isLength({max:2200})
     .withMessage("Instagram content length cannot exceed 2200 characters"),

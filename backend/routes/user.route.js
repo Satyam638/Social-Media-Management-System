@@ -65,8 +65,8 @@ route.use(sanitizeAll);
 route.post(
     '/auth/register',
     rateLimiter.regLimiter,
+    upload.single('profilePic'),
     inputValidation.validateRegister,
-    upload.single('profileImage'),
     authController.registerUser
 );
 

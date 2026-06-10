@@ -1,58 +1,60 @@
 const axios = require('axios');
 const fs = require('fs');
 // Post a text update to LinkedIn
-const postToLinkedIn = async (accessToken, personUrn, text) => {
-
+const postToLinkedIn = async (accessToken, personUrn, text, imageUrl = null) => {
     try {
-        console.log("ACCESS TOKEN:", accessToken);
-        console.log("PERSON URN:", personUrn);
+        console.log('ACCESS TOKEN:', accessToken);
+        console.log('PERSON URN:', personUrn);
+        console.log('IMAGE URL:', imageUrl);
+
+        // ✅ Build shareContent object first
+        const shareContent = {
+            shareCommentary:    { text: text },
+            shareMediaCategory: imageUrl ? 'IMAGE' : 'NONE'
+        };
+
+        // ✅ Add media only if imageUrl exists
+        if (imageUrl) {
+            shareContent.media = [{
+                status:      'READY',
+                originalUrl: imageUrl
+            }];
+        }
+
         const body = {
-            author: `urn:li:person:${personUrn}`,
-            lifecycleState: 'PUBLISHED', // publish immediately
+            author:          `urn:li:person:${personUrn}`,
+            lifecycleState:  'PUBLISHED',
             specificContent: {
-                'com.linkedin.ugc.ShareContent': {
-                    shareCommentary: {
-                        text: text
-                    },
-                    shareMediaCategory: 'NONE'
-                }
+                'com.linkedin.ugc.ShareContent': shareContent
             },
             visibility: {
                 'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC'
             }
         };
-        console.log(
-            "REQUEST BODY:",
-            JSON.stringify(body, null, 2)
-        );
+
+        console.log('REQUEST BODY:', JSON.stringify(body, null, 2));
 
         const response = await axios.post(
             'https://api.linkedin.com/v2/ugcPosts',
             body,
             {
                 headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                    'Content-Type': 'application/json',
+                    Authorization:               `Bearer ${accessToken}`,
+                    'Content-Type':              'application/json',
                     'X-Restli-Protocol-Version': '2.0.0'
                 },
                 timeout: 30000
             }
         );
-        console.log("LINKEDIN SUCCESS");
+
+        console.log('✅ LinkedIn SUCCESS:', response.data);
         return response.data;
 
     } catch (err) {
-
-        console.log("========== LINKEDIN ERROR ==========");
-        console.log("MESSAGE:", err.message);
-        console.log("CODE:", err.code);
-        console.log("STATUS:", err.response?.status);
-
-        console.log(
-            "DATA:",
-            JSON.stringify(err.response?.data, null, 2)
-        );
-
+        console.log('========== LINKEDIN ERROR ==========');
+        console.log('MESSAGE:', err.message);
+        console.log('STATUS:', err.response?.status);
+        console.log('DATA:', JSON.stringify(err.response?.data, null, 2));
         throw err;
     }
 };

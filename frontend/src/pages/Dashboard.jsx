@@ -129,9 +129,29 @@ export default function Dashboard() {
         instagram: { isConnected: false, info: '' },
         twitter: { isConnected: false, info: '' },
     });
-    const [content, setContent] = useState({ linkedin: '', facebook: '', instagram: '', twitter: '' });
+    // const [content, setContent] = useState({ linkedin: '', facebook: '', instagram: '', twitter: '' });
     const [selected, setSelected] = useState({ linkedin: false, facebook: false, instagram: false, twitter: false });
-    const [image, setImage] = useState('');
+    const [content, setContent] = useState({
+        linkedin: {
+            content: '',
+            imageUrl: ''
+        },
+
+        facebook: {
+            content: '',
+            imageUrl: ''
+        },
+
+        instagram: {
+            content: '',
+            imageUrl: ''
+        },
+
+        twitter: {
+            content: '',
+            imageUrl: ''
+        }
+    });
     const [scheduledAt, setScheduledAt] = useState('');
     const [postMode, setPostMode] = useState('immediate');
     const [statusLoading, setStatusLoading] = useState(true);
@@ -199,15 +219,15 @@ export default function Dashboard() {
         }
     };
 
-   const fetchCurrentUser = async () => {
-    try {
-        const res = await API.get('/api/auth/me');
-        console.log('User data:', res.data); // 👈 check browser console
-        setCurrentUser(res.data.user);
-    } catch (err) {
-        console.error('Failed to fetch user', err);
-    }
-};
+    const fetchCurrentUser = async () => {
+        try {
+            const res = await API.get('/api/auth/me');
+            console.log('User data:', res.data); // 👈 check browser console
+            setCurrentUser(res.data.user);
+        } catch (err) {
+            console.error('Failed to fetch user', err);
+        }
+    };
 
     const disconnectPlatform = async (platformKey) => {
         const p = PLATFORMS.find(pl => pl.key === platformKey);
@@ -225,33 +245,81 @@ export default function Dashboard() {
         const anySelected = Object.values(selected).some(v => v);
         if (!anySelected) { toast.error('Select at least one platform'); return; }
         for (const p of PLATFORMS) {
-            if (selected[p.key] && !content[p.key].trim()) { toast.error(`Add content for ${p.label}`); return; }
+            if (
+                selected[p.key] &&
+                !content[p.key].content.trim()
+            ) {
+                toast.error(`Add content for ${p.label}`);
+                return;
+            }
         }
         if (postMode === 'schedule' && !scheduledAt) { toast.error('Pick a date and time to schedule'); return; }
         try {
             setPostLoading(true);
             setPostResult(null);
+            // Instagram requires image URL
+if (
+    selected.instagram &&
+    !content.instagram.imageUrl.trim()
+) {
+    toast.error('Instagram requires an image URL');
+    return;
+}
             const endpoint = postMode === 'schedule' ? '/api/posts/schedule-post' : '/api/posts/create-post';
             const platformsPayload = {};
-            PLATFORMS.forEach(p => { platformsPayload[p.key] = { enabled: selected[p.key] || false, content: content[p.key] || '' }; });
+            PLATFORMS.forEach(p => {
+                platformsPayload[p.key] = {
+                    enabled: selected[p.key] || false,
+                    content: content[p.key].content || '',
+                    imageUrl: content[p.key].imageUrl || ''
+                };
+            });
             const body = { platforms: platformsPayload };
             if (postMode === 'schedule') body.scheduledAt = scheduledAt;
-            if (image) body.imageUrl = image;
+
+            console.log(
+    JSON.stringify(body, null, 2)
+);
+            // if (image) body.imageUrl = image;
             const res = await API.post(endpoint, body);
             setPostResult(res.data);
             if (res.data.success) {
                 toast.success(postMode === 'schedule' ? 'Post scheduled!' : 'Post published!');
-                setContent({ linkedin: '', facebook: '', instagram: '', twitter: '' });
+setContent({
+    linkedin: {
+        content: '',
+        imageUrl: ''
+    },
+    facebook: {
+        content: '',
+        imageUrl: ''
+    },
+    instagram: {
+        content: '',
+        imageUrl: ''
+    },
+    twitter: {
+        content: '',
+        imageUrl: ''
+    }
+});
                 setSelected({ linkedin: false, facebook: false, instagram: false, twitter: false });
                 setScheduledAt('');
-                setImage('');
+                // setImage('');
                 setActiveComposePlatform(null);
             } else {
                 toast.error(res.data.message || 'Some platforms failed');
             }
         } catch (err) {
-            toast.error(err.response?.data?.error || 'Post failed');
-        } finally {
+    const data = err.response?.data;
+
+    toast.error(
+        data?.error ||
+        data?.errors?.join(', ') ||
+        data?.message ||
+        'Post failed'
+    );
+} finally {
             setPostLoading(false);
         }
     };
@@ -296,7 +364,13 @@ export default function Dashboard() {
     };
 
     const useCaption = (platform, caption) => {
-        setContent(prev => ({ ...prev, [platform]: caption }));
+        setContent(prev => ({
+            ...prev,
+            [platform]: {
+                ...prev[platform],
+                content: caption
+            }
+        }));
         setSelected(prev => ({ ...prev, [platform]: true }));
         setActiveComposePlatform(platform);
         toast.success(`Caption applied to ${platform}`);
@@ -325,9 +399,20 @@ export default function Dashboard() {
             {/* Logo */}
             <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-xs">
-                        {currentUser?.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
-                    </div>
+{currentUser?.profilePic ? (
+    <img
+    src={currentUser.profilePic}
+    alt={currentUser.name}
+    className="w-10 h-10 rounded-full object-cover"
+    onError={(e) => {
+        e.target.style.display = 'none';
+    }}
+/>
+) : (
+    <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold">
+        {currentUser?.name?.charAt(0).toUpperCase() || 'U'}
+    </div>
+)}
                     <div>
                         <p className="text-sm font-semibold text-gray-900 leading-none truncate max-w-[120px]">
                             {currentUser?.name || 'Loading...'}
@@ -693,7 +778,7 @@ export default function Dashboard() {
                                                             >
                                                                 <PIcon size={13} />
                                                                 {p.label}
-                                                                {content[p.key] && <span className="w-1.5 h-1.5 rounded-full bg-green-500 ml-0.5" />}
+                                                                {content[p.key].content && <span className="w-1.5 h-1.5 rounded-full bg-green-500 ml-0.5" />}
                                                             </button>
                                                         );
                                                     })}
@@ -714,19 +799,57 @@ export default function Dashboard() {
                                                                     <PIcon size={15} />
                                                                     <span className="text-xs font-medium text-gray-600">{p.label} content</span>
                                                                 </div>
-                                                                <span className={`text-xs font-medium ${content[p.key].length > p.charLimit * 0.9 ? 'text-red-500' : 'text-gray-400'
+                                                                <span className={`text-xs font-medium ${content[p.key].content.length > p.charLimit * 0.9 ? 'text-red-500' : 'text-gray-400'
                                                                     }`}>
-                                                                    {content[p.key].length} / {p.charLimit.toLocaleString()}
+                                                                    {content[p.key].content.length} / {p.charLimit.toLocaleString()}
                                                                 </span>
                                                             </div>
                                                             <textarea
-                                                                value={content[p.key]}
-                                                                onChange={e => setContent(prev => ({ ...prev, [p.key]: e.target.value }))}
+                                                                value={content[p.key].content}
+                                                                onChange={e =>
+                                                                    setContent(prev => ({
+                                                                        ...prev,
+                                                                        [p.key]: {
+                                                                            ...prev[p.key],
+                                                                            content: e.target.value
+                                                                        }
+                                                                    }))
+                                                                }
                                                                 placeholder={p.placeholder}
                                                                 maxLength={p.charLimit}
                                                                 rows={5}
                                                                 className={`w-full border-2 ${p.border} rounded-xl p-4 text-sm outline-none focus:ring-2 focus:ring-indigo-300 resize-none placeholder-gray-400 transition-all`}
                                                             />
+                                                            <div className="mt-3">
+                                                                <label className="block text-xs font-medium text-gray-600 mb-1">
+                                                                    Image URL
+                                                                    {p.key === 'instagram' && (
+                                                                        <span className="text-red-500"> *required</span>
+                                                                    )}
+                                                                </label>
+
+                                                                <input
+                                                                    type="url"
+                                                                    value={content[p.key].imageUrl}
+                                                                    onChange={(e) =>
+                                                                        setContent(prev => ({
+                                                                            ...prev,
+                                                                            [p.key]: {
+                                                                                ...prev[p.key],
+                                                                                imageUrl: e.target.value
+                                                                            }
+                                                                        }))
+                                                                    }
+                                                                    placeholder="https://example.com/image.jpg"
+                                                                    className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm"
+                                                                />
+
+                                                                {p.key === 'instagram' && (
+                                                                    <p className="text-xs text-gray-500 mt-1">
+                                                                        Instagram posts require an image URL.
+                                                                    </p>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     );
                                                 })
@@ -742,7 +865,7 @@ export default function Dashboard() {
                                     )}
 
                                     {/* Image URL */}
-                                    <div>
+                                    {/* <div>
                                         <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-1.5">
                                             <Icon name="image" size={14} className="text-gray-400" />
                                             Image URL
@@ -755,7 +878,7 @@ export default function Dashboard() {
                                             placeholder="https://example.com/image.jpg"
                                             className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent placeholder-gray-400 transition-all"
                                         />
-                                    </div>
+                                    </div> */}
 
                                     {/* Post mode */}
                                     <div>

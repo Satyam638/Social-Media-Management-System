@@ -1,47 +1,40 @@
 const axios = require('axios');
 
 const GRAPH_API = 'https://graph.facebook.com/v19.0';
-const postToInstagram = async(accessToken, instagramAccountId,content,imageUrl= null) => {
+// instagramService.js
+const postToInstagram = async (accessToken, instagramAccountId, content, imageUrl) => {
 
-    // step 1 create media container to post on instagram
-    const containerParams = {
-        caption:content,
-        access_token: accessToken
-    };
-
-    // check is image provided or not
-    const finalImageURL = imageUrl || 'https://picsum.photos/1080/1080';
-    if(finalImageURL){
-        containerParams.image_url = finalImageURL;
-        containerParams.media_type='IMAGE';
+    // at this point imageUrl is guaranteed to exist
+    // because validation already checked it
+    // but add safety check anyway
+    if (!imageUrl) {
+        throw new Error('Instagram requires an image URL');
     }
 
-    else{
-        // it means this is an text only POST
-        containerParams.media_type = 'REELS';
-        containerParams.video_url=imageUrl;
-    }
-    // 
+    // STEP 1: Create media container
     const containerRes = await axios.post(
         `${GRAPH_API}/${instagramAccountId}/media`,
-        containerParams
+        {
+            caption:      content,
+            image_url:    imageUrl,
+            media_type:   'IMAGE',
+            access_token: accessToken
+        }
     );
 
-    const containerId = await containerRes.data.id;
-    console.log(`📦 Instagram container created: ${containerId}`);
+    const containerId = containerRes.data.id;
+    console.log(`📦 Instagram container: ${containerId}`);
 
-    // now container is created so let's move to publish post
-
+    // STEP 2: Publish
     const publishRes = await axios.post(
         `${GRAPH_API}/${instagramAccountId}/media_publish`,
         {
-            creation_id:containerId,
-            access_token:accessToken
+            creation_id:  containerId,
+            access_token: accessToken
         }
-    )
-     console.log(`✅ Instagram published: ${publishRes.data.id}`)
+    );
 
-     return publishRes.data;
-}
+    return publishRes.data;
+};
 
 module.exports = {postToInstagram};

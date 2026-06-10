@@ -1,9 +1,11 @@
-require('dotenv').config();
+require("dotenv").config({ 
+  path: "C:/Users/Lenovo/Desktop/SMMS/backend/.env" 
+});
 console.log("1: Server file started");
-const { createWorker } = require('../backend/config/worker');
 console.log("2: Env loaded");
 const app = require('./app');
 console.log("3: App loaded");
+const { createWorker } = require('./config/worker');
 const connectDB = require('./config/db');
 const PORT = process.env.PORT || 3000;
 const runServer = async () => {

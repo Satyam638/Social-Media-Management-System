@@ -81,51 +81,48 @@ const isConnectedtoLinkedIn = async (req, res, next) => {
     }
 }
 // characters define for each content length for consistency of platform oriented content
-const PLATFORM_LIMITS = {
-    linkedin: 3000,
-    facebook: 63000,
-    instagram: 2200,
-    twitter: 280
-};
-
-const validatePlatforms = (platforms,imageUrl =null) => {
+const validatePlatforms = (platforms) => {
     const errors = [];
 
-    // get list of know platforms
+    const PLATFORM_LIMITS = {
+        linkedin:  3000,
+        instagram: 2200,
+        twitter:   280,
+        facebook:  63000
+    };
+
     const knownPlatforms = Object.keys(PLATFORM_LIMITS);
 
-    // check if any unknown platform was sent or not
-
-    Object.keys(platforms).forEach(platform => {
-        if (!knownPlatforms.includes(platform)) {
-            errors.push(`Unknown Platform : ${platform}`)
-        }
-    });
-
-    // check is platform enabled(selected) or not
     Object.entries(platforms).forEach(([platform, data]) => {
+        // skip unknown platforms
+        if (!knownPlatforms.includes(platform)) return;
+
         // skip disabled platforms
         if (!data.enabled) return;
 
-        // if enabled then content of that platform must provided
-        if (!data.content || data.content.trim === '') {
-            errors.push(`${platform}: content is not required when platform is enabled `);
+        // content required for all enabled platforms
+        if (!data.content || data.content.trim() === '') {
+            errors.push(`${platform}: content is required`);
             return;
         }
 
-        // if content is provided then length of content should not more than defined
-        const limit = PLATFORM_LIMITS[platform]
-
+        // character limit check
+        const limit = PLATFORM_LIMITS[platform];
         if (data.content.length > limit) {
             errors.push(
-                `${platform}: content is ${data.content.length} chars ` +
-                `but limit is ${limit} chars ` +
-                `(${data.content.length - limit} over limit)`
+                `${platform}: content exceeds ${limit} character limit`
             );
         }
+    });
 
-        
-    })
+    // Instagram ALWAYS requires image — outside forEach so runs once
+    if (platforms.instagram?.enabled && !platforms.instagram?.imageUrl) {
+        errors.push('instagram: image is required for Instagram posts');
+    }
+
+    // LinkedIn and Facebook do NOT require image
+    // no check needed for them
+
     return errors;
 };
 

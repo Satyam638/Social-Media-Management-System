@@ -52,7 +52,7 @@ const userSchema = mongoose.Schema({
             accessToken: { type: String, default: null },
             // instgram businees account id  different from FB page ID
             instagramAccountId:{type:String,default:null},
-            instagramUsername:{type:String,default:false},
+            instagramUsername:{type:String,default:null},
             isConnected: { type: Boolean, default: false },
             connectedAt: { type: Date, default: null }
         },
