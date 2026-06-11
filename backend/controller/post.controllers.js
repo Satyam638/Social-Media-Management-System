@@ -130,9 +130,9 @@ const { default: axios } = require('axios');
 
 const schedulePost = async (req, res) => {
 
-    console.log(
-  JSON.stringify(req.body, null, 2)
-);
+//     console.log(
+//   JSON.stringify(req.body, null, 2)
+// );
 
     try {
         const { platforms, scheduledAt,imageUrl } = req.body;
@@ -155,7 +155,7 @@ const schedulePost = async (req, res) => {
         };
         // validate platforms
         const validationErrors  = postValidation.validatePlatforms(platforms,imageUrl);
-        if (!validationErrors.length > 0) {
+        if (validationErrors.length > 0) {
             return res.status(400).json({
                 success: false,
                 errors: validationErrors
@@ -268,6 +268,7 @@ const publishToPlatforms = async (post, user) => {
         // it means platform is connected now call postTolinkedIn API
         else {
             try {
+                
                 const result = await postLinkedIn(
                     user.platforms.linkedin.accessToken,
                     user.platforms.linkedin.personUrn,

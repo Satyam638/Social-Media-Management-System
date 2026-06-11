@@ -1,5 +1,5 @@
 const axios = require('axios');
-const fs = require('fs');
+// const fs = require('fs');
 // Post a text update to LinkedIn
 const postToLinkedIn = async (accessToken, personUrn, text, imageUrl = null) => {
     try {
@@ -90,15 +90,33 @@ const registerImage = async (accessToken, personUrn) => {
 };
 
 // ── STEP 2 - Upload image to LinkedIn ─────────────────
-const uploadImage = async (uploadUrl, accessToken, imagePath) => {
-    const imageBuffer = fs.readFileSync(imagePath);
+const uploadImage = async (
+    uploadUrl,
+    accessToken,
+    imageUrl
+) => {
 
-    await axios.put(uploadUrl, imageBuffer, {
-        headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/octet-stream',
+    // Download image from ImageKit
+    const imageResponse = await axios.get(
+        imageUrl,
+        {
+            responseType: 'arraybuffer'
         }
-    });
+    );
+
+    const imageBuffer = imageResponse.data;
+
+    // Upload to LinkedIn
+    await axios.put(
+        uploadUrl,
+        imageBuffer,
+        {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                'Content-Type': 'application/octet-stream'
+            }
+        }
+    );
 };
 
 // ── STEP 3 - Create post with image ───────────────────
@@ -155,8 +173,8 @@ const postToLinkedInWithImage = async (accessToken, personUrn, content, imagePat
         console.log("Post created ✅:", response.data);
 
         // Cleanup temp file
-        fs.unlinkSync(imagePath);
-        console.log("Temp file deleted ✅");
+        // fs.unlinkSync(imagePath);
+        // console.log("Temp file deleted ✅");
 
         return response.data;
 

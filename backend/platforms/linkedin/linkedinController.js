@@ -1,5 +1,5 @@
 const linkedInAuth = require('../linkedin/linkedinAuth');
-const { postToLinkedIn } = require('../linkedin/linkedinService');
+const { postToLinkedIn, postToLinkedInWithImage } = require('../linkedin/linkedinService');
 const User = require('../../model/user.model');
 
 // Step 2 LinkedIn redirects back here with a code
@@ -42,7 +42,7 @@ const LinkedInRedirectWithCode = async (req, res) => {
         const userName = profile.name;
 
         //after coonected we will navigate to the dashboard for creating post 
-         res.redirect(
+        res.redirect(
             `${process.env.FRONTEND_URL}/dashboard?linkedin=connected&name=${encodeURIComponent(profile.name)}`
         );
 
@@ -62,7 +62,7 @@ const linkedinLogin = (req, res) => {
 };
 
 // Post to LinkedIn
-const postLinkedIn = async (accessToken, personUrn, text) => {
+const postLinkedIn = async (accessToken, personUrn, text, imageUrl = null) => {
 
     if (!accessToken) {
         return res.status(401).json({ error: 'LinkedIn Access Token Missing. Visit /linkedin/auth first' });
@@ -73,8 +73,14 @@ const postLinkedIn = async (accessToken, personUrn, text) => {
     }
 
     try {
-        const result = await postToLinkedIn(accessToken, personUrn, text);
-        return result;
+        if (imageUrl) {
+            const result = await postToLinkedInWithImage(accessToken, personUrn, text, imageUrl);
+            return result;
+        }
+        else {
+            const result = await postToLinkedIn(accessToken, personUrn, text);
+            return result;
+        }
 
     } catch (err) {
         console.error('LinkedIn Post Error:', err.message);
@@ -95,7 +101,7 @@ const checkPostStatus = async (req, res) => {
 
         res.json({
             isConnected: user.platforms.linkedin.isConnected,
-            name:user.platforms.linkedin.name,
+            name: user.platforms.linkedin.name,
             connectedAt: user.platforms.linkedin.connectedAt
         });
     } catch (err) {
@@ -114,9 +120,9 @@ const disconnectLinkedin = async (req, res) => {
             'platforms.linkedin.connectedAt': null
         });
         return res.json(
-            { 
-                success: true, 
-                message: 'Linkedin disconnected' 
+            {
+                success: true,
+                message: 'Linkedin disconnected'
             }
         );
     } catch (err) {

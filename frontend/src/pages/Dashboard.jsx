@@ -166,6 +166,16 @@ export default function Dashboard() {
     const [aiCaptions, setAiCaptions] = useState(null);
     const [aiLoading, setAiLoading] = useState(false);
     const [activeComposePlatform, setActiveComposePlatform] = useState(null);
+    // ── Add these new states ───────────────────────────────
+    const [platformImages, setPlatformImages] = useState({
+        linkedin: { file: null, preview: null, url: '' },
+        facebook: { file: null, preview: null, url: '' },
+        instagram: { file: null, preview: null, url: '' },
+        twitter: { file: null, preview: null, url: '' },
+    });
+    const [uploadingImage, setUploadingImage] = useState({
+        linkedin: false, facebook: false, instagram: false, twitter: false
+    });
 
     // ── On mount ─────────────────────────────────────────────────────────────
     useEffect(() => {
@@ -258,13 +268,13 @@ export default function Dashboard() {
             setPostLoading(true);
             setPostResult(null);
             // Instagram requires image URL
-if (
-    selected.instagram &&
-    !content.instagram.imageUrl.trim()
-) {
-    toast.error('Instagram requires an image URL');
-    return;
-}
+            if (
+                selected.instagram &&
+                !content.instagram.imageUrl.trim()
+            ) {
+                toast.error('Instagram requires an image URL');
+                return;
+            }
             const endpoint = postMode === 'schedule' ? '/api/posts/schedule-post' : '/api/posts/create-post';
             const platformsPayload = {};
             PLATFORMS.forEach(p => {
@@ -278,48 +288,43 @@ if (
             if (postMode === 'schedule') body.scheduledAt = scheduledAt;
 
             console.log(
-    JSON.stringify(body, null, 2)
-);
+                JSON.stringify(body, null, 2)
+            );
             // if (image) body.imageUrl = image;
             const res = await API.post(endpoint, body);
             setPostResult(res.data);
             if (res.data.success) {
                 toast.success(postMode === 'schedule' ? 'Post scheduled!' : 'Post published!');
-setContent({
-    linkedin: {
-        content: '',
-        imageUrl: ''
-    },
-    facebook: {
-        content: '',
-        imageUrl: ''
-    },
-    instagram: {
-        content: '',
-        imageUrl: ''
-    },
-    twitter: {
-        content: '',
-        imageUrl: ''
-    }
-});
+                setContent({
+                    linkedin: { content: '', imageUrl: '' },
+                    facebook: { content: '', imageUrl: '' },
+                    instagram: { content: '', imageUrl: '' },
+                    twitter: { content: '', imageUrl: '' },
+                });
                 setSelected({ linkedin: false, facebook: false, instagram: false, twitter: false });
                 setScheduledAt('');
-                // setImage('');
                 setActiveComposePlatform(null);
+
+                // ✅ Reset images too
+                setPlatformImages({
+                    linkedin: { file: null, preview: null, url: '' },
+                    facebook: { file: null, preview: null, url: '' },
+                    instagram: { file: null, preview: null, url: '' },
+                    twitter: { file: null, preview: null, url: '' },
+                });
             } else {
                 toast.error(res.data.message || 'Some platforms failed');
             }
         } catch (err) {
-    const data = err.response?.data;
+            const data = err.response?.data;
 
-    toast.error(
-        data?.error ||
-        data?.errors?.join(', ') ||
-        data?.message ||
-        'Post failed'
-    );
-} finally {
+            toast.error(
+                data?.error ||
+                data?.errors?.join(', ') ||
+                data?.message ||
+                'Post failed'
+            );
+        } finally {
             setPostLoading(false);
         }
     };
@@ -390,6 +395,78 @@ setContent({
         });
     };
 
+    // ── Handle per-platform image upload ──────────────────
+    const handleImageUpload = async (platformKey, file) => {
+        if (!file) return;
+
+        const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        if (!allowed.includes(file.type)) {
+            toast.error('Only JPG, PNG, WebP or GIF allowed');
+            return;
+        }
+        if (file.size > 10 * 1024 * 1024) {
+            toast.error('Image must be under 10MB');
+            return;
+        }
+
+        const preview = URL.createObjectURL(file);
+        setPlatformImages(prev => ({
+            ...prev,
+            [platformKey]: { file, preview, url: '' }
+        }));
+
+        try {
+            setUploadingImage(prev => ({ ...prev, [platformKey]: true }));
+
+            const formData = new FormData();
+            formData.append('image', file);
+
+            const res = await API.post('/api/upload/image', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+
+            setPlatformImages(prev => ({
+                ...prev,
+                [platformKey]: { file, preview, url: res.data.url }
+            }));
+
+            setContent(prev => ({
+                ...prev,
+                [platformKey]: {
+                    ...prev[platformKey],
+                    imageUrl: res.data.url
+                }
+            }));
+
+            toast.success(`Image uploaded ✅`);
+
+        } catch (err) {
+            toast.error(err.response?.data?.error || 'Image upload failed');
+            setPlatformImages(prev => ({
+                ...prev,
+                [platformKey]: { file: null, preview: null, url: '' }
+            }));
+        } finally {
+            setUploadingImage(prev => ({ ...prev, [platformKey]: false }));
+        }
+    };
+
+    // ── Remove platform image ──────────────────────────────
+    const removeImage = (platformKey) => {
+        setPlatformImages(prev => ({
+            ...prev,
+            [platformKey]: { file: null, preview: null, url: '' }
+        }));
+        setContent(prev => ({
+            ...prev,
+            [platformKey]: { ...prev[platformKey], imageUrl: '' }
+        }));
+    };
+
+    // ▲▲▲ END OF NEW FUNCTIONS ▲▲▲
+
+    // const connectedCount = Object.values(connections).filter(c => c.isConnected).length;
+
     const connectedCount = Object.values(connections).filter(c => c.isConnected).length;
     const selectedPlatforms = PLATFORMS.filter(p => selected[p.key]);
 
@@ -399,20 +476,20 @@ setContent({
             {/* Logo */}
             <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-2.5">
-{currentUser?.profilePic ? (
-    <img
-    src={currentUser.profilePic}
-    alt={currentUser.name}
-    className="w-10 h-10 rounded-full object-cover"
-    onError={(e) => {
-        e.target.style.display = 'none';
-    }}
-/>
-) : (
-    <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold">
-        {currentUser?.name?.charAt(0).toUpperCase() || 'U'}
-    </div>
-)}
+                    {currentUser?.profilePic ? (
+                        <img
+                            src={currentUser.profilePic}
+                            alt={currentUser.name}
+                            className="w-10 h-10 rounded-full object-cover"
+                            onError={(e) => {
+                                e.target.style.display = 'none';
+                            }}
+                        />
+                    ) : (
+                        <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold">
+                            {currentUser?.name?.charAt(0).toUpperCase() || 'U'}
+                        </div>
+                    )}
                     <div>
                         <p className="text-sm font-semibold text-gray-900 leading-none truncate max-w-[120px]">
                             {currentUser?.name || 'Loading...'}
@@ -820,34 +897,78 @@ setContent({
                                                                 rows={5}
                                                                 className={`w-full border-2 ${p.border} rounded-xl p-4 text-sm outline-none focus:ring-2 focus:ring-indigo-300 resize-none placeholder-gray-400 transition-all`}
                                                             />
+                                                            {/* ── Image Upload Section ──────────────────────────── */}
                                                             <div className="mt-3">
-                                                                <label className="block text-xs font-medium text-gray-600 mb-1">
-                                                                    Image URL
+                                                                <label className="block text-xs font-medium text-gray-600 mb-2">
+                                                                    Image
                                                                     {p.key === 'instagram' && (
-                                                                        <span className="text-red-500"> *required</span>
+                                                                        <span className="text-red-500 ml-1">* required</span>
+                                                                    )}
+                                                                    {p.key !== 'instagram' && (
+                                                                        <span className="text-gray-400 ml-1">(optional)</span>
                                                                     )}
                                                                 </label>
 
-                                                                <input
-                                                                    type="url"
-                                                                    value={content[p.key].imageUrl}
-                                                                    onChange={(e) =>
-                                                                        setContent(prev => ({
-                                                                            ...prev,
-                                                                            [p.key]: {
-                                                                                ...prev[p.key],
-                                                                                imageUrl: e.target.value
-                                                                            }
-                                                                        }))
-                                                                    }
-                                                                    placeholder="https://example.com/image.jpg"
-                                                                    className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm"
-                                                                />
+                                                                {platformImages[p.key]?.preview ? (
+                                                                    // ── Show preview after image selected ──────────
+                                                                    <div className="relative rounded-xl overflow-hidden border border-gray-200">
+                                                                        <img
+                                                                            src={platformImages[p.key].preview}
+                                                                            alt="Preview"
+                                                                            className="w-full h-40 object-cover"
+                                                                        />
 
-                                                                {p.key === 'instagram' && (
-                                                                    <p className="text-xs text-gray-500 mt-1">
-                                                                        Instagram posts require an image URL.
-                                                                    </p>
+                                                                        {/* Uploading overlay */}
+                                                                        {uploadingImage[p.key] && (
+                                                                            <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center gap-2">
+                                                                                <svg className="animate-spin w-6 h-6 text-white" viewBox="0 0 24 24" fill="none">
+                                                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="white" strokeWidth="4" />
+                                                                                    <path className="opacity-75" fill="white" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                                                                </svg>
+                                                                                <span className="text-white text-xs font-medium">Uploading...</span>
+                                                                            </div>
+                                                                        )}
+
+                                                                        {/* Success badge */}
+                                                                        {!uploadingImage[p.key] && platformImages[p.key]?.url && (
+                                                                            <div className="absolute bottom-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded-lg font-medium flex items-center gap-1">
+                                                                                ✅ Ready
+                                                                            </div>
+                                                                        )}
+
+                                                                        {/* Remove button */}
+                                                                        {!uploadingImage[p.key] && (
+                                                                            <button
+                                                                                onClick={() => removeImage(p.key)}
+                                                                                className="absolute top-2 right-2 w-7 h-7 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center transition-colors text-xs font-bold"
+                                                                            >
+                                                                                ✕
+                                                                            </button>
+                                                                        )}
+                                                                    </div>
+                                                                ) : (
+                                                                    // ── Show upload area when no image selected ─────
+                                                                    <label className={`flex flex-col items-center justify-center w-full h-28 border-2 border-dashed rounded-xl cursor-pointer transition-all group ${p.key === 'instagram'
+                                                                        ? 'border-pink-300 hover:border-pink-400 hover:bg-pink-50'
+                                                                        : 'border-gray-300 hover:border-indigo-400 hover:bg-indigo-50'
+                                                                        }`}>
+                                                                        <input
+                                                                            type="file"
+                                                                            accept="image/jpeg,image/png,image/webp,image/gif"
+                                                                            className="hidden"
+                                                                            onChange={e => handleImageUpload(p.key, e.target.files[0])}
+                                                                        />
+                                                                        <div className="text-2xl mb-1">🖼️</div>
+                                                                        <p className={`text-xs font-medium transition-colors ${p.key === 'instagram'
+                                                                            ? 'text-pink-500 group-hover:text-pink-600'
+                                                                            : 'text-gray-500 group-hover:text-indigo-600'
+                                                                            }`}>
+                                                                            Click to upload image
+                                                                        </p>
+                                                                        <p className="text-xs text-gray-400 mt-0.5">
+                                                                            JPG, PNG, WebP · Max 10MB
+                                                                        </p>
+                                                                    </label>
                                                                 )}
                                                             </div>
                                                         </div>

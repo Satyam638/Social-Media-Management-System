@@ -3,22 +3,26 @@ const router   = express.Router();
 const upload   = require('../config/upload');
 // ↑ import your multer config
 
-const { uploadImage, uploadProfilePicture } = require('../controller/upload.controllers');
-const { isValidUser } = require('../middleware/auth.middleware');
+const uploadController = require('../controller/upload.controllers');
+const auth = require('../middleware/validation.middleware');
+
+
+console.log('isValidUser:', typeof auth.isValidUser);
+console.log('upload:', typeof upload);
+console.log('uploadImage:', typeof uploadController.uploadImage);
 
 // upload post image
 router.post('/image',
-    isValidUser,
+    auth.isValidUser,
     upload.single('image'),
-    uploadImage
+    uploadController.uploadImage
 );
 
 // upload profile picture
 router.post('/profile-picture',
-    isValidUser,
+    auth.isValidUser,
     upload.single('image'),
-    uploadProfilePicture
+    uploadController.uploadProfilePicture
 );
 
 module.exports = router;
-// ↑ NOT { router } — just router

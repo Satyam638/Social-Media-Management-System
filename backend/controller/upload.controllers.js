@@ -1,5 +1,5 @@
 // controller/upload.controllers.js
-const imagekit   = require('../config/imagekit');
+const {imagekit}   = require('../config/imagekit');
 const userModel  = require('../model/user.model');
 
 // ── Upload post image ──────────────────────────────────────

@@ -110,23 +110,23 @@ const validateCreatePost = validate([
 
     body('platforms.linkedin.content')
     .optional()
-    .notEmpty()
-    .withMessage('Linkedin content must be a string').
-    isLength({max:3000})
+    // .notEmpty()
+    // .withMessage('Linkedin content must be a string').
+    .isLength({max:3000})
     .withMessage("Linkeidn content length cannot exceed 3000 characters"),
 
     body('platforms.facebook.content')
     .optional()
-    .notEmpty()
-    .withMessage('Facebook content must be a string').
-    isLength({max:63000})
+    // .notEmpty()
+    // .withMessage('Facebook content must be a string')
+    .isLength({max:63000})
     .withMessage("Facebook content length cannot exceed 63000 characters"),
 
     body('platforms.instagram.content')
     .optional()
     .isString()
-    .withMessage('Instagram content must be a string').
-    isLength({max:2200})
+    // .withMessage('Instagram content must be a string').
+    .isLength({max:2200})
     .withMessage("Instagram content length cannot exceed 2200 characters"),
     body('scheduledAt')
     .optional()

@@ -1,6 +1,22 @@
 require("dotenv").config({ 
   path: "C:/Users/Lenovo/Desktop/SMMS/backend/.env" 
 });
+
+// validate required env vars
+const required = [
+    'MONGODB_URI', 'JWT_SECRET', 'SESSION_SECRET',
+    'FACEBOOK_APP_ID', 'FACEBOOK_APP_SECRET',
+    'LINKEDIN_CLIENT_ID', 'LINKEDIN_CLIENT_SECRET',
+    'FRONTEND_URL', 'GROQ_API_KEY'
+];
+required.forEach(key => {
+    if (!process.env[key]) {
+        console.error(`❌ Missing env var: ${key}`);
+        process.exit(1);
+    }
+});
+
+
 console.log("1: Server file started");
 console.log("2: Env loaded");
 const app = require('./app');
