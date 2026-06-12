@@ -10,6 +10,9 @@ const redisConnection = new Redis({
     maxRetriesPerRequest:null
 });
 
+console.log('Redis Host:', process.env.REDIS_HOST);
+console.log('Redis Port:', process.env.REDIS_PORT);
+
 redisConnection.on('connect',()=>{
     console.log('Redis Connected');
 });

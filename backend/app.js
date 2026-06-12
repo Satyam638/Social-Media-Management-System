@@ -18,6 +18,12 @@ createBullBoard({
   queues:[new BullMQAdapter(postQueue)],
   serverAdapter
 });
+app.get('/', (req, res) => {
+    res.status(200).json({
+        success: true,
+        message: 'OneSocial Backend Running 🚀'
+    });
+});
 
 app.use('/admin/queues', 
   basicAuth({
