@@ -48,6 +48,8 @@ const linkedInRoute = require('../backend/platforms/linkedin/linkedinRoute');
 const aiServiceRoute = require('../backend/routes/ai.route');
 const uploadRoute = require('../backend/routes/upload.route');
 
+app.set('trust proxy', 1);
+
 //run for all routes
 const ratelimiter  = require('../backend/middleware/rateLimiter.middleware');
 // permisssions

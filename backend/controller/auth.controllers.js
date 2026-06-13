@@ -57,8 +57,9 @@ const registerUser = async (req, res) => {
       <h2>Your OTP: ${otp}</h2>
       <p>This OTP expires in 5 minutes</p>
     `;
-
+    console.log('OTP generated');
     await sendMail(email, subject, text);
+    console.log('OTP email sent');
 
     // 🔹 Remove sensitive data
     const userResponse = {
@@ -101,6 +102,7 @@ const verifyOtp = async (req, res) => {
     user.verificationOTP = null;
     user.otpExpiry = null;
     await user.save();
+    console.log('User saved');
 
     res.status(200).json({ success: true, message: "Email Verified Successfully, Now you can login" });
   } catch (error) {
