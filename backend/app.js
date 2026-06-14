@@ -1,5 +1,6 @@
 // require("dotenv").config();
 const express = require('express');
+const cors = require('cors');
 const app = express();
 
 // ✅ Must be FIRST — before any routes
@@ -59,7 +60,6 @@ app.use('/admin/queues',
   ,serverAdapter.getRouter());
 // goto http://localhost:3000/admin/queues to see all jobs visually
 
-const cors = require('cors');
 const cookieParser = require('cookie-parser');
 
 const swaggerUi = require('swagger-ui-express');
