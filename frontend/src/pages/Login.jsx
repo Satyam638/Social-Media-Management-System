@@ -46,20 +46,37 @@ export default function Login() {
     };
 
     const handleLogin = async () => {
-        setError('');
-        if (!form.email.trim())  { setError('Email address is required'); return; }
-        if (!form.password)      { setError('Password is required'); return; }
-        try {
-            setLoading(true);
-            await API.post('/api/auth/login', form);
-            localStorage.setItem('token', res.data.token); // save token
+    setError('');
+    if (!form.email.trim())  { setError('Email address is required'); return; }
+    if (!form.password)      { setError('Password is required'); return; }
+
+    try {
+        setLoading(true);
+        const res = await API.post('/api/auth/login', form);
+
+        // ✅ Check success before proceeding
+        if (res.data.success) {
+            // ✅ Save token if your backend returns one
+            // if (res.data.token) {
+            //     localStorage.setItem('token', res.data.token);
+            // }
             navigate('/dashboard');
-        } catch (err) {
-            setError(err.response?.data?.message || 'Incorrect Credentials. Try After 15 min.');
-        } finally {
-            setLoading(false);
+        } 
+
+    } catch (err) {
+        // ✅ More specific error messages
+        const status = err.response?.status;
+        const message = err.response?.data?.message;
+
+        if (status === 429) {
+            setError('Too many attempts. Please wait 15 minutes.');
+        } else if (status === 401) {
+            setError('Incorrect email or password.');
+        } else {
+            setError(message || 'Something went wrong. Please try again.');
         }
-    };
+    } 
+};
 
     const handleKeyDown = e => { if (e.key === 'Enter') handleLogin(); };
 
