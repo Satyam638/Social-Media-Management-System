@@ -94,10 +94,10 @@ const PLATFORM_ICON = { linkedin: LinkedInIcon, facebook: FacebookIcon, instagra
 
 // ── Platform config ──────────────────────────────────────────────────────────
 const PLATFORMS = [
-    { key: 'linkedin', label: 'LinkedIn', color: 'bg-blue-600', border: 'border-blue-400', light: 'bg-blue-50', authUrl: 'http://localhost:3000/api/linkedin/auth', statusApi: '/api/linkedin/status', disconnectUrl: '/api/linkedin/disconnect', charLimit: 3000, placeholder: 'Write professional content for LinkedIn...' },
-    { key: 'facebook', label: 'Facebook', color: 'bg-blue-800', border: 'border-blue-700', light: 'bg-blue-50', authUrl: 'http://localhost:3000/api/facebook/auth', statusApi: '/api/facebook/status', disconnectUrl: '/api/facebook/disconnect', charLimit: 63000, placeholder: 'Write conversational content for Facebook...' },
-    { key: 'instagram', label: 'Instagram', color: 'bg-pink-600', border: 'border-pink-400', light: 'bg-pink-50', authUrl: 'http://localhost:3000/api/facebook/auth', statusApi: '/api/instagram/status', disconnectUrl: '/api/facebook/disconnect', charLimit: 2200, placeholder: 'Write casual content with hashtags for Instagram...' },
-    { key: 'twitter', label: 'Twitter/X', color: 'bg-gray-900', border: 'border-gray-600', light: 'bg-gray-50', authUrl: 'http://localhost:3000/api/twitter/auth', statusApi: '/api/twitter/status', charLimit: 280, placeholder: 'Write short punchy content for Twitter...', comingSoon: true },
+    { key: 'linkedin', label: 'LinkedIn', color: 'bg-blue-600', border: 'border-blue-400', light: 'bg-blue-50', authUrl: `${import.meta.env.VITE_API_URL}/api/linkedin/auth`, statusApi: '/api/linkedin/status', disconnectUrl: '/api/linkedin/disconnect', charLimit: 3000, placeholder: 'Write professional content for LinkedIn...' },
+    { key: 'facebook', label: 'Facebook', color: 'bg-blue-800', border: 'border-blue-700', light: 'bg-blue-50', authUrl: `${import.meta.env.VITE_API_URL}/api/facebook/auth`, statusApi: '/api/facebook/status', disconnectUrl: '/api/facebook/disconnect', charLimit: 63000, placeholder: 'Write conversational content for Facebook...' },
+    { key: 'instagram', label: 'Instagram', color: 'bg-pink-600', border: 'border-pink-400', light: 'bg-pink-50', authUrl: `${import.meta.env.VITE_API_URL}/api/facebook/auth`, statusApi: '/api/instagram/status', disconnectUrl: '/api/facebook/disconnect', charLimit: 2200, placeholder: 'Write casual content with hashtags for Instagram...' },
+    { key: 'twitter', label: 'Twitter/X', color: 'bg-gray-900', border: 'border-gray-600', light: 'bg-gray-50', authUrl: `${import.meta.env.VITE_API_URL}/api/twitter/auth`, statusApi: '/api/twitter/status', charLimit: 280, placeholder: 'Write short punchy content for Twitter...', comingSoon: true },
 ];
 
 const TONES = [

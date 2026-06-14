@@ -52,6 +52,7 @@ export default function Login() {
         try {
             setLoading(true);
             await API.post('/api/auth/login', form);
+            localStorage.setItem('token', res.data.token); // save token
             navigate('/dashboard');
         } catch (err) {
             setError(err.response?.data?.message || 'Incorrect Credentials. Try After 15 min.');
