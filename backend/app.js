@@ -27,7 +27,8 @@ app.use(cors({
 }));
 
 // ✅ Handle preflight for ALL routes
-app.options('*', cors());
+app.options('(.*)', cors());
+
 
 const helmet = require('helmet');
 const compression = require('compression');
