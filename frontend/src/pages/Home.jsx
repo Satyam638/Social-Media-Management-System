@@ -76,7 +76,7 @@ const features = [
     {
         emoji: '🤖',
         title: 'AI Caption Generator',
-        desc: 'Describe your topic, pick a tone, and get platform-optimized captions in seconds.',
+        desc: 'Enter a topic and tone — get ready-to-post captions tailored for each platform in under 60 seconds.',
         color: 'from-violet-50 to-purple-50',
         border: 'border-violet-200',
         tag: 'Powered by AI',
@@ -85,7 +85,7 @@ const features = [
     {
         emoji: '📅',
         title: 'Smart Scheduler',
-        desc: 'Pick any future date and time — your post goes live automatically, even while you sleep.',
+        desc: 'Pick a date and time, and your post goes live automatically — no need to be online when it publishes.',
         color: 'from-blue-50 to-cyan-50',
         border: 'border-blue-200',
         tag: 'Set & forget',
@@ -94,25 +94,25 @@ const features = [
     {
         emoji: '📊',
         title: 'Analytics Dashboard',
-        desc: 'Track post counts, success rates per platform, and a 30-day publishing timeline.',
+        desc: 'See how many posts you\'ve published per platform, track success rates, and view a 30-day history.',
         color: 'from-emerald-50 to-teal-50',
         border: 'border-emerald-200',
-        tag: 'Real-time',
+        tag: 'Track growth',
         tagColor: 'bg-emerald-100 text-emerald-700',
     },
     {
         emoji: '⚡',
         title: 'Simultaneous Posting',
-        desc: 'Write once. Select your platforms. One click publishes everywhere at the same time.',
+        desc: 'Write once, select your platforms, and publish to all of them in a single click — no copy-pasting.',
         color: 'from-amber-50 to-orange-50',
         border: 'border-amber-200',
-        tag: 'Save hours',
+        tag: 'Save time',
         tagColor: 'bg-amber-100 text-amber-700',
     },
     {
         emoji: '🔗',
-        title: 'OAuth Integration',
-        desc: 'Securely connect LinkedIn, Facebook and Instagram with one-click OAuth — no passwords stored.',
+        title: 'Secure OAuth Login',
+        desc: 'Connect LinkedIn, Facebook and Instagram via official OAuth — your passwords are never stored or seen.',
         color: 'from-rose-50 to-pink-50',
         border: 'border-rose-200',
         tag: 'Secure',
@@ -120,8 +120,8 @@ const features = [
     },
     {
         emoji: '🎨',
-        title: 'Custom Content Per Platform',
-        desc: 'Each platform gets its own tailored content, character limits, and tone — all from one composer.',
+        title: 'Per-Platform Content',
+        desc: 'Write different captions for each platform in one composer — because what works on LinkedIn differs from Instagram.',
         color: 'from-indigo-50 to-blue-50',
         border: 'border-indigo-200',
         tag: 'Flexible',
@@ -129,17 +129,12 @@ const features = [
     },
 ];
 
+// ── Updated stats — honest and specific ─────────────────────────────────────
 const stats = [
-    { value: 3, suffix: '', label: 'Platforms supported' },
-    { value: 100, suffix: '%', label: 'Free to get started' },
+    { value: 3, suffix: '', label: 'Platforms in one place' },
     { value: 60, suffix: 's', label: 'To generate AI captions' },
-    { value: 30, suffix: '+', label: 'Days of analytics history' },
-];
-
-const testimonials = [
-    { initials: 'AK', name: 'Amit K.', text: 'Saves me 3 hours every week. The AI captions are actually good.', bg: 'bg-violet-100', text_color: 'text-violet-700' },
-    { initials: 'SR', name: 'Sneha R.', text: 'Finally one tool that handles LinkedIn and Instagram together.', bg: 'bg-blue-100', text_color: 'text-blue-700' },
-    { initials: 'MJ', name: 'Mike J.', text: 'The scheduler is seamless. My posts go out perfectly timed.', bg: 'bg-emerald-100', text_color: 'text-emerald-700' },
+    { value: 30, suffix: '+', label: 'Days of post history' },
+    { value: 0, suffix: '₹', label: 'Cost to get started' },
 ];
 
 // ── Home Component ───────────────────────────────────────────────────────────
@@ -169,7 +164,7 @@ export default function Home() {
                             onClick={() => navigate('/how-to-use')}
                             className="px-5 py-2 text-sm font-medium text-gray-600 hover:text-indigo-600 rounded-lg hover:bg-indigo-50 transition-all duration-200"
                         >
-                            How to use
+                            How it works
                         </button>
                         <button
                             onClick={() => navigate('/login')}
@@ -230,10 +225,11 @@ export default function Home() {
                     </span>
                 </h1>
 
-                {/* Subheading */}
+                {/* Subheading — honest, no fake claims */}
                 <p className="text-xl text-gray-500 max-w-2xl mx-auto leading-relaxed mb-10">
                     Stop switching between apps. Write once, customize per platform, and publish
-                    everywhere — with AI captions, scheduling, and analytics built in.
+                    everywhere — with AI captions, post scheduling, and analytics built in.
+                    Free to use, no card required.
                 </p>
 
                 {/* CTAs */}
@@ -242,7 +238,7 @@ export default function Home() {
                         onClick={() => navigate('/register')}
                         className="px-8 py-4 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-all duration-200 text-lg shadow-lg shadow-indigo-200 hover:shadow-indigo-300 hover:-translate-y-0.5"
                     >
-                        Start for free — no card needed ✨
+                        Create free account ✨
                     </button>
                     <button
                         onClick={() => navigate('/login')}
@@ -252,32 +248,27 @@ export default function Home() {
                     </button>
                 </div>
 
-                {/* Social proof */}
-                <div className="flex items-center justify-center gap-3 flex-wrap">
-                    <div className="flex -space-x-2">
-                        {['AK', 'SR', 'MJ', 'PD'].map((init, i) => (
-                            <div
-                                key={i}
-                                className="w-8 h-8 rounded-full border-2 border-white bg-indigo-100 flex items-center justify-center text-xs font-semibold text-indigo-700"
-                            >
-                                {init}
-                            </div>
-                        ))}
-                    </div>
-                    <div className="text-sm text-gray-500">
-                        <span className="text-amber-500 font-semibold">★★★★★</span>
-                        {' '}Loved by <span className="font-semibold text-gray-700">200+ creators</span>
-                    </div>
+                {/* Honest trust indicators — no fake user count */}
+                <div className="flex items-center justify-center gap-6 flex-wrap">
+                    {['No credit card', 'No setup fees', 'Instant access'].map(item => (
+                        <span key={item} className="flex items-center gap-1.5 text-sm text-gray-500">
+                            <span className="text-green-500"><CheckIcon /></span>
+                            {item}
+                        </span>
+                    ))}
                 </div>
             </section>
 
-            {/* ── Stats Bar ─────────────────────────────────────────────── */}
+            {/* ── Stats Bar — honest numbers only ───────────────────────── */}
             <section className="border-y border-gray-100 bg-gray-50">
                 <div className="max-w-6xl mx-auto px-6 py-10 grid grid-cols-2 md:grid-cols-4 gap-6">
                     {stats.map((s, i) => (
                         <div key={i} className="text-center">
                             <p className="text-4xl font-bold text-indigo-600">
-                                <AnimatedCounter target={s.value} suffix={s.suffix} />
+                                {s.suffix === '₹'
+                                    ? <span>₹0</span>
+                                    : <AnimatedCounter target={s.value} suffix={s.suffix} />
+                                }
                             </p>
                             <p className="text-sm text-gray-500 mt-1">{s.label}</p>
                         </div>
@@ -291,7 +282,7 @@ export default function Home() {
                     <p className="text-sm font-semibold text-indigo-600 uppercase tracking-widest mb-3">Everything you need</p>
                     <h2 className="text-4xl font-bold text-gray-900 mb-4">Built for creators & teams</h2>
                     <p className="text-lg text-gray-500 max-w-xl mx-auto">
-                        Every feature you need to manage your social media presence — in one clean dashboard.
+                        Every tool you need to manage your social media — in one clean dashboard.
                     </p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -320,9 +311,24 @@ export default function Home() {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         {[
-                            { step: '01', title: 'Connect your accounts', desc: 'Link LinkedIn, Facebook and Instagram with a secure one-click OAuth flow. No passwords stored.', icon: '🔗' },
-                            { step: '02', title: 'Write or generate content', desc: 'Type your post manually, or let AI generate platform-specific captions from just a topic and tone.', icon: '✍️' },
-                            { step: '03', title: 'Publish or schedule', desc: 'Hit publish now to post immediately to all selected platforms, or schedule for the perfect moment.', icon: '🚀' },
+                            {
+                                step: '01',
+                                title: 'Connect your accounts',
+                                desc: 'Link LinkedIn, Facebook and Instagram using secure OAuth. No passwords stored — ever.',
+                                icon: '🔗'
+                            },
+                            {
+                                step: '02',
+                                title: 'Write or generate content',
+                                desc: 'Type your post manually or let AI generate platform-specific captions from a topic and tone.',
+                                icon: '✍️'
+                            },
+                            {
+                                step: '03',
+                                title: 'Publish or schedule',
+                                desc: 'Post immediately to all selected platforms, or pick a future date and let OneSocial handle it.',
+                                icon: '🚀'
+                            },
                         ].map((s, i) => (
                             <div key={i} className="relative">
                                 {i < 2 && (
@@ -342,27 +348,43 @@ export default function Home() {
                 </div>
             </section>
 
-            {/* ── Testimonials ──────────────────────────────────────────── */}
+            {/* ── What you can do — replaces fake testimonials ──────────── */}
             <section className="max-w-6xl mx-auto px-6 py-20">
                 <div className="text-center mb-12">
-                    <p className="text-sm font-semibold text-indigo-600 uppercase tracking-widest mb-3">What people say</p>
-                    <h2 className="text-4xl font-bold text-gray-900">Creators love OneSocial</h2>
+                    <p className="text-sm font-semibold text-indigo-600 uppercase tracking-widest mb-3">Use cases</p>
+                    <h2 className="text-4xl font-bold text-gray-900">Who is OneSocial for?</h2>
+                    <p className="text-lg text-gray-500 max-w-xl mx-auto mt-4">
+                        Whether you manage one brand or many, OneSocial saves you time every week.
+                    </p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {testimonials.map((t, i) => (
-                        <div key={i} className="bg-white border border-gray-200 rounded-2xl p-6 hover:border-indigo-200 hover:shadow-md transition-all duration-200">
-                            <div className="flex items-center gap-1 mb-4">
-                                {'★★★★★'.split('').map((s, j) => (
-                                    <span key={j} className="text-amber-400 text-sm">{s}</span>
-                                ))}
-                            </div>
-                            <p className="text-gray-700 text-sm leading-relaxed mb-5">"{t.text}"</p>
-                            <div className="flex items-center gap-3">
-                                <div className={`w-9 h-9 rounded-full ${t.bg} flex items-center justify-center text-xs font-bold ${t.text_color}`}>
-                                    {t.initials}
-                                </div>
-                                <span className="text-sm font-medium text-gray-800">{t.name}</span>
-                            </div>
+                    {[
+                        {
+                            emoji: '👤',
+                            title: 'Solo Creators',
+                            desc: 'Manage your personal brand across LinkedIn, Instagram and Facebook without juggling three different apps.',
+                            bg: 'bg-violet-50',
+                            border: 'border-violet-200',
+                        },
+                        {
+                            emoji: '💼',
+                            title: 'Small Businesses',
+                            desc: 'Keep your business pages active and consistent. Schedule a week of content in one sitting.',
+                            bg: 'bg-blue-50',
+                            border: 'border-blue-200',
+                        },
+                        {
+                            emoji: '📣',
+                            title: 'Social Media Managers',
+                            desc: 'Handle multiple platforms from one dashboard. Use AI to draft faster and scheduling to stay ahead.',
+                            bg: 'bg-emerald-50',
+                            border: 'border-emerald-200',
+                        },
+                    ].map((card, i) => (
+                        <div key={i} className={`${card.bg} border ${card.border} rounded-2xl p-7 hover:shadow-md hover:-translate-y-1 transition-all duration-200`}>
+                            <div className="text-4xl mb-4">{card.emoji}</div>
+                            <h3 className="text-base font-semibold text-gray-900 mb-2">{card.title}</h3>
+                            <p className="text-sm text-gray-600 leading-relaxed">{card.desc}</p>
                         </div>
                     ))}
                 </div>
@@ -379,8 +401,8 @@ export default function Home() {
                             Ready to post smarter?
                         </h2>
                         <p className="text-indigo-200 text-lg mb-8 max-w-xl mx-auto">
-                            Join OneSocial for free. No credit card. No setup fees.
-                            Just connect your accounts and start posting.
+                            Create your free account, connect your platforms, and start
+                            publishing in minutes. No credit card, no setup fees.
                         </p>
                         <div className="flex flex-col sm:flex-row gap-4 justify-center">
                             <button
@@ -422,6 +444,8 @@ export default function Home() {
                         <span className="text-sm text-gray-400">© 2026 OneSocial</span>
                         <button onClick={() => navigate('/login')} className="text-sm text-gray-500 hover:text-indigo-600 transition-colors">Login</button>
                         <button onClick={() => navigate('/register')} className="text-sm text-gray-500 hover:text-indigo-600 transition-colors">Register</button>
+                        {/* Add Privacy Policy route when ready */}
+                        {/* <button onClick={() => navigate('/privacy')} className="text-sm text-gray-500 hover:text-indigo-600 transition-colors">Privacy Policy</button> */}
                     </div>
                 </div>
             </footer>

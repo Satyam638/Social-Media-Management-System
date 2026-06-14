@@ -2,6 +2,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../services/api';
+console.log("VITE_API_URL =", import.meta.env.VITE_API_URL);
+
 
 // ── Toast notification system ────────────────────────────────────────────────
 function useToast() {
