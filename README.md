@@ -1,141 +1,246 @@
-# 🚀 Social Media Management System
+# OneSocial — Social Media Management System
 
-Managing multiple social media accounts can quickly become overwhelming. Switching between platforms, manually publishing posts, generating engaging captions, and keeping track of schedules often consumes valuable time.
+> Write once. Publish everywhere.
 
-The **Social Media Management System (SMMS)** was built to solve this problem.
+**Live Demo →** https://social-media-management-system-mu.vercel.app
 
-SMMS is a full-stack platform that enables users to connect their social media accounts, create content, generate AI-powered captions, schedule posts, and publish across multiple platforms from a single dashboard.
-
-Whether you're a content creator, marketing team, startup founder, or business owner, SMMS helps streamline your social media workflow and improve productivity.
+OneSocial is a full-stack social media management platform that lets you connect LinkedIn, Facebook, and Instagram — then create, schedule, and publish content across all of them from a single dashboard. AI-powered caption generation included.
 
 ---
 
-## ✨ Why SMMS?
+## The Problem
 
-Imagine having one dashboard where you can:
+Managing multiple social media accounts means:
+- Opening LinkedIn, writing a post, publishing.
+- Switching to Facebook, rewriting it, publishing.
+- Opening Instagram, adjusting it again, publishing.
+- Repeating this every single day.
 
-✅ Connect multiple social media accounts
-
-✅ Create and schedule posts in advance
-
-✅ Generate captions using AI
-
-✅ Manage content from a centralized platform
-
-✅ Automate publishing across social media channels
-
-Instead of manually posting every day, SMMS allows users to plan content, automate workflows, and focus on creating value.
+OneSocial eliminates that by letting you write once and publish everywhere — with AI captions tailored per platform and scheduling so posts go live even while you sleep.
 
 ---
 
-## 🎯 Key Features
+## Live Demo
 
-### 🔐 Secure Authentication & Authorization
+**→** https://social-media-management-system-mu.vercel.app
 
-* JWT-based Authentication
-* OTP Email Verification
-* Role-Based Access Control (RBAC)
-* Secure Session Management
-
-### 🌐 Social Media Integration
-
-* LinkedIn Integration
-* Facebook Integration
-* Instagram Integration
-* OAuth 2.0 Authentication Flow
-
-### 📅 Smart Content Scheduling
-
-* Schedule posts for future publishing
-* Automated Cron-based execution
-* Multi-platform publishing support
-* Queue management for scheduled content
-
-### 🤖 AI-Powered Content Creation
-
-* Generate engaging captions using Groq AI
-* Improve content quality and consistency
-* Reduce content creation effort
-
-### ⚡ Performance Optimization
-
-* Redis caching for faster response times
-* Optimized database queries
-* Efficient API architecture
-
-### 🖼️ Media Management
-
-* Upload and manage media assets
-* Attach images to social media posts
-* Centralized content management
+> Note: Full public access is coming in 2-3 weeks once Meta completes app verification. You can register and explore the dashboard in the meantime.
 
 ---
 
-## 🏗️ Tech Stack
+## Features
 
-### Backend
+### Authentication
+- JWT-based login with secure HTTP-only cookies
+- OTP email verification on registration
+- Role-based access control (Admin / User)
+- Secure session management
 
-* Node.js
-* Express.js
-* MongoDB
-* Redis
-* JWT
-* OAuth 2.0
+### Social Media Integration
+- LinkedIn — connect via OAuth 2.0, publish posts with or without images
+- Facebook — connect Pages via OAuth 2.0, publish posts
+- Instagram — publish image posts via Facebook Graph API
+- Tokens stored securely per user in MongoDB
 
-### Frontend
+### AI Caption Generator
+- Powered by Groq AI
+- Enter a topic and tone — get platform-specific captions in under 60 seconds
+- Separate caption output for LinkedIn, Facebook, and Instagram
 
-* React.js
-* HTML5
-* CSS3
+### Post Scheduling
+- Pick any future date and time
+- Cron jobs automatically publish at the scheduled time
+- Cancel scheduled posts before they go live
+- View scheduled and published post history
 
-### Integrations & Tools
+### Media Management
+- Upload images directly from the composer
+- Images stored and served via Cloudinary
+- Attach images to any platform post
 
-* LinkedIn API
-* Facebook Graph API
-* Groq AI
-* Cron Jobs
-* Nodemailer
-
----
-
-## 🔄 How It Works
-
-1. User registers and verifies their email.
-2. User connects social media accounts using OAuth 2.0.
-3. User creates content and uploads media.
-4. AI generates optimized captions.
-5. User schedules the post.
-6. Cron jobs automatically publish content at the scheduled time.
-7. Users manage all content from a centralized dashboard.
+### Analytics Dashboard
+- Track total posts per platform
+- View 30-day publishing history
+- Monitor success and failure rates
 
 ---
 
-## 📸 Screenshots
+## Tech Stack
 
-> Add screenshots of:
->
-> * Login Page
-> * Dashboard
-> * Connected Accounts
-> * Post Scheduler
-> * AI Caption Generator
+**Backend**
+- Node.js + Express.js
+- MongoDB + Mongoose
+- Redis (caching)
+- JWT + bcryptjs
+- Nodemailer (OTP emails)
+- node-cron (scheduled publishing)
+- Multer + Cloudinary (media uploads)
+
+**Frontend**
+- React.js (Vite)
+- Tailwind CSS
+- Axios
+
+**Integrations**
+- LinkedIn API (OAuth 2.0)
+- Facebook Graph API (OAuth 2.0)
+- Instagram Graph API
+- Groq AI API
+
+**Deployment**
+- Frontend → Vercel
+- Backend → Render
 
 ---
 
-## 🚀 Future Enhancements
+## Project Structure
 
-* Social Media Analytics Dashboard
-* Team Collaboration Features
-* Content Performance Tracking
-* Advanced AI Content Suggestions
-* Multi-Workspace Support
+```
+Social-Media-Management-System/
+├── frontend/                  # React + Vite frontend
+│   ├── src/
+│   │   ├── pages/             # Login, Register, Dashboard, Home, etc.
+│   │   ├── services/          # Axios API instance
+│   │   └── main.jsx
+│   └── .env
+│
+└── backend/                   # Node.js + Express backend
+    ├── model/                 # MongoDB models
+    ├── middleware/            # Auth, validation
+    ├── linkedin/              # LinkedIn OAuth + posting
+    ├── facebook/              # Facebook + Instagram OAuth + posting
+    ├── routes/                # All API routes
+    ├── controllers/           # Auth, posts, AI, upload
+    └── server.js
+```
 
 ---
 
-## 👨‍💻 Author
+## Getting Started
 
-**Satyam Gupta**
+### Prerequisites
+- Node.js v18+
+- MongoDB (local or Atlas)
+- Redis
+- Accounts: LinkedIn Developer App, Facebook Developer App, Groq AI, Cloudinary
 
-Backend Developer | Node.js Developer
+### 1. Clone the repository
 
-If you found this project interesting, feel free to ⭐ the repository.
+```bash
+git clone https://github.com/Satyam638/Social-Media-Management-System.git
+cd Social-Media-Management-System
+```
+
+### 2. Setup Backend
+
+```bash
+cd backend
+npm install
+```
+
+Create a `.env` file in `/backend`:
+
+```env
+PORT=3000
+MONGODB_URI=your_mongodb_connection_string
+SECRET_KEY=your_jwt_secret
+
+# Email (OTP)
+EMAIL_USER=your_email@gmail.com
+EMAIL_PASS=your_app_password
+
+# LinkedIn
+LINKEDIN_CLIENT_ID=your_linkedin_client_id
+LINKEDIN_CLIENT_SECRET=your_linkedin_client_secret
+LINKEDIN_REDIRECT_URI=http://localhost:3000/api/linkedin/callback
+
+# Facebook & Instagram
+FACEBOOK_APP_ID=your_facebook_app_id
+FACEBOOK_APP_SECRET=your_facebook_app_secret
+FACEBOOK_REDIRECT_URI=http://localhost:3000/api/facebook/callback
+
+# Groq AI
+GROQ_API_KEY=your_groq_api_key
+
+# Cloudinary
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+
+# Redis
+REDIS_URL=your_redis_url
+
+# Frontend URL
+FRONTEND_URL=http://localhost:5173
+```
+
+```bash
+npm start
+```
+
+### 3. Setup Frontend
+
+```bash
+cd frontend
+npm install
+```
+
+Create a `.env` file in `/frontend`:
+
+```env
+VITE_API_URL=http://localhost:3000
+```
+
+```bash
+npm run dev
+```
+
+Open http://localhost:5173
+
+---
+
+## How It Works
+
+1. Register and verify your email via OTP
+2. Connect LinkedIn, Facebook, and Instagram using OAuth
+3. Write content manually or generate AI captions by entering a topic and tone
+4. Upload an image if needed
+5. Choose to publish immediately or schedule for later
+6. Cron jobs handle scheduled publishing automatically
+7. View all posts and analytics from the dashboard
+
+---
+
+## Screenshots
+
+> Coming soon — dashboard, AI caption generator, post scheduler, and analytics.
+
+---
+
+## Roadmap
+
+- [ ] Twitter/X integration
+- [ ] Reddit integration
+- [ ] Team collaboration and multi-user workspaces
+- [ ] Post performance analytics (likes, comments, reach)
+- [ ] Advanced AI content suggestions
+- [ ] Mobile app
+
+---
+
+## Author
+
+**Satyam Gupta** — Backend Developer | Node.js Developer | Full Stack Developer
+
+- GitHub: [@Satyam638](https://github.com/Satyam638)
+- LinkedIn: [Connect with me](https://www.linkedin.com/in/your-linkedin-handle)
+
+Open to work — if your team is hiring Node.js / Backend / Full Stack developers, feel free to reach out!
+
+If you found this project useful, please ⭐ the repository — it helps a lot!
+
+---
+
+## License
+
+MIT License — free to use and modify.
