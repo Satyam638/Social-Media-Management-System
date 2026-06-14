@@ -2,6 +2,32 @@
 const express = require('express');
 const app = express();
 
+// ✅ Must be FIRST — before any routes
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'https://social-media-management-system-mu.vercel.app'
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, Postman, curl)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    } else {
+      return callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// ✅ Handle preflight for ALL routes
+app.options('*', cors());
+
 const helmet = require('helmet');
 const compression = require('compression');
 
@@ -59,10 +85,6 @@ app.use(compression());
 app.use(ratelimiter.generalLimiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
-app.use(cors({
-  origin: "http://localhost:5173", // frontend URL
-  credentials: true
-}))
 app.use(cookieParser());
 // Session middleware (needed to store tokens)
 app.use(session({
