@@ -1,5 +1,6 @@
 # OneSocial — Social Media Management System
 
+<img width="1348" height="605" alt="oneSocialHomepge" src="https://github.com/user-attachments/assets/a45d810f-7fdb-4399-9392-b9291dcf92bd" />
 > Write once. Publish everywhere.
 
 **Live Demo →** https://social-media-management-system-mu.vercel.app
@@ -43,6 +44,8 @@ OneSocial eliminates that by letting you write once and publish everywhere — w
 - Tokens stored securely per user in MongoDB
 
 ### AI Caption Generator
+<img width="1352" height="604" alt="oneSocialDashboardPage" src="https://github.com/user-attachments/assets/dda3eeeb-1720-4f08-aa0b-c0dd728ac927" />
+
 - Powered by Groq AI
 - Enter a topic and tone — get platform-specific captions in under 60 seconds
 - Separate caption output for LinkedIn, Facebook, and Instagram
@@ -59,6 +62,8 @@ OneSocial eliminates that by letting you write once and publish everywhere — w
 - Attach images to any platform post
 
 ### Analytics Dashboard
+<img width="1352" height="607" alt="oneSocialAnalytics" src="https://github.com/user-attachments/assets/b820a825-1813-4b37-a16e-802e3db80448" />
+
 - Track total posts per platform
 - View 30-day publishing history
 - Monitor success and failure rates
@@ -212,11 +217,8 @@ Open http://localhost:5173
 ---
 
 ## Screenshots
-
-> Coming soon — dashboard, AI caption generator, post scheduler, and analytics.
-
+<img width="1350" height="605" alt="image" src="https://github.com/user-attachments/assets/68f5de1e-a1ee-43b0-a012-34fca898577c" />
 ---
-
 ## Roadmap
 
 - [ ] Twitter/X integration
@@ -233,6 +235,7 @@ Open http://localhost:5173
 **Satyam Gupta** — Backend Developer | Node.js Developer | Full Stack Developer
 
 - GitHub: [@Satyam638](https://github.com/Satyam638)
+- Email: satyamgupta55591@gmail.com
 - LinkedIn: [Connect with me](https://www.linkedin.com/in/your-linkedin-handle)
 
 Open to work — if your team is hiring Node.js / Backend / Full Stack developers, feel free to reach out!
