@@ -9,6 +9,7 @@ import Analytics from './pages/Analytics';
 import ForgotPassword from "./pages/ForgotPassword";
 import ProtectedRoute from './components/ProtectedRoute';
 import HowToUse       from './pages/HowToUse';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 
 export default function App() {
     return (
@@ -19,6 +20,7 @@ export default function App() {
                 <Route path='/verify' element={<VerifyOTP />} />
                 <Route path='/login' element={<Login />} />
                 <Route path="/how-to-use" element={<HowToUse />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
                 {/* <Route path='/dashboard' element={<Dashboard />} /> */}
                 {/* <Route path='/analytics' element={<Analytics />} /> */}
                 <Route path="/forgot-password" element={<ForgotPassword />} />

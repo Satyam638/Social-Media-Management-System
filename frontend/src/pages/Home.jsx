@@ -445,7 +445,7 @@ export default function Home() {
                         <button onClick={() => navigate('/login')} className="text-sm text-gray-500 hover:text-indigo-600 transition-colors">Login</button>
                         <button onClick={() => navigate('/register')} className="text-sm text-gray-500 hover:text-indigo-600 transition-colors">Register</button>
                         {/* Add Privacy Policy route when ready */}
-                        {/* <button onClick={() => navigate('/privacy')} className="text-sm text-gray-500 hover:text-indigo-600 transition-colors">Privacy Policy</button> */}
+                        <button onClick={() => navigate('/privacy')} className="text-sm text-gray-500 hover:text-indigo-600 transition-colors">Privacy Policy</button>
                     </div>
                 </div>
             </footer>
