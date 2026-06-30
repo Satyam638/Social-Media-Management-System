@@ -225,4 +225,11 @@ route.get(
     isValidUser.isValidUser,
     postController.getPostsByStatus
 );
+
+// post.route.js
+route.get('/calendar',
+    isValidUser.isValidUser,
+    postController.getCalendarPosts
+);
+
 module.exports = route;

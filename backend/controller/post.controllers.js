@@ -1,13 +1,14 @@
-const postModel = require('../model/post.model');
-const userModel = require('../model/user.model');
-const { postQueue } = require('../config/queue');
-const { postLinkedIn } = require('../platforms/linkedin/linkedinController');
+const postModel = require("../model/post.model");
+const userModel = require("../model/user.model");
+const { postQueue } = require("../config/queue");
+const { postLinkedIn } = require("../platforms/linkedin/linkedinController");
 // const {  } = require('../platforms/facebook/facebookController');
-const linkedinServices = require('../platforms/linkedin/linkedinService');
-const { postToFacebook } = require('../platforms/facebook/facebookService');
-const { postToInstagram } = require('../platforms/instagram/instgramService');
-const postValidation = require('../middleware/validation.middleware');
-const { default: axios } = require('axios');
+const linkedinServices = require("../platforms/linkedin/linkedinService");
+const { postToFacebook } = require("../platforms/facebook/facebookService");
+const { postToInstagram } = require("../platforms/instagram/instgramService");
+const postValidation = require("../middleware/validation.middleware");
+const { default: axios } = require("axios");
+const sendMail = require("../config/sendMail");
 
 // const createPost = async (req, res) => {
 
@@ -16,12 +17,12 @@ const { default: axios } = require('axios');
 //         console.log(req.body);
 //         console.log(typeof req.body.platforms);
 //         console.log(req.body.platforms);
-//         // find user from database who raise request for creating post on behalf of platform user 
+//         // find user from database who raise request for creating post on behalf of platform user
 //         const userId = req.user.id;
-//         // to debug purpose 
+//         // to debug purpose
 //         console.log("REQ.USER:", req.user);
 //         console.log("USER ID:", req.user?.id);
-//         // check is the image path is provided or not 
+//         // check is the image path is provided or not
 //         const imagePath = req.file ? req.file.path : null;
 
 //         console.log("req.file:", req.file);       // ← add this
@@ -129,513 +130,633 @@ const { default: axios } = require('axios');
 // }
 
 const schedulePost = async (req, res) => {
+  try {
+    const { platforms, scheduledAt, imageUrl } = req.body;
 
-//     console.log(
-//   JSON.stringify(req.body, null, 2)
-// );
+    console.log("Scheduled At: ", scheduledAt);
+    console.log(new Date(scheduledAt).toISOString());
 
-    try {
-        const { platforms, scheduledAt,imageUrl } = req.body;
+    const userId = req.user.id;
 
-        const userId = req.user.id;
-
-        // validate platforms
-        if (!scheduledAt) {
-            return res.status(400).json({
-                success: false,
-                error: "Schedule Timing Must Required"
-            });
-        };
-        // timing must be in future
-        if (new Date(scheduledAt) <= new Date()) {
-            return res.status(400).json({
-                success: false,
-                error: "scheduledAt must be a future date and time"
-            });
-        };
-        // validate platforms
-        const validationErrors  = postValidation.validatePlatforms(platforms,imageUrl);
-        if (validationErrors.length > 0) {
-            return res.status(400).json({
-                success: false,
-                errors: validationErrors
-            });
-        };
-
-        // let's create drafted post into db 
-        //  because is server or node-cron crashes still we have post which we try post again
-        const draftPost = await postModel.create({
-            userId,
-            platforms,
-            overallStatus: 'draft',
-            scheduledAt: new Date(scheduledAt)
-        });
-
-        // add job into queue with the delay 
-        const now = new Date();
-        const scheduledDate = new Date(scheduledAt)
-        const delay = scheduledDate.getTime() - now.getTime();
-
-        // let's add job into queue with delay
-        const job = await postQueue.add('publish-post',{
-            postId:draftPost._id.toString(),
-            userId:userId.toString()
-        },
-        {
-            delay,
-            jobId:`post-${draftPost._id}`,
-        }
+    // validate platforms
+    if (!scheduledAt) {
+      return res.status(400).json({
+        success: false,
+        error: "Schedule Timing Must Required",
+      });
+    }
+    // timing must be in future
+    if (new Date(scheduledAt) <= new Date()) {
+      return res.status(400).json({
+        success: false,
+        error: "scheduledAt must be a future date and time",
+      });
+    }
+    // validate platforms
+    const validationErrors = postValidation.validatePlatforms(
+      platforms,
+      imageUrl,
     );
+    if (validationErrors.length > 0) {
+      return res.status(400).json({
+        success: false,
+        errors: validationErrors,
+      });
+    }
+
+    // get user — needed for email
+    const user = await userModel.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, error: "User not found" });
+    }
+
+    // let's create drafted post into db
+    //  because is server or node-cron crashes still we have post which we try post again
+    const draftPost = await postModel.create({
+      userId,
+      platforms,
+      overallStatus: "draft",
+      scheduledAt: new Date(scheduledAt),
+    });
+
+    // add job into queue with the delay
+    const now = new Date();
+    const scheduledDate = new Date(scheduledAt);
+    const delay = scheduledDate.getTime() - now.getTime();
+
+    // let's add job into queue with delay
+    const job = await postQueue.add(
+      "publish-post",
+      {
+        postId: draftPost._id.toString(),
+        userId: userId.toString(),
+      },
+      {
+        delay,
+        jobId: `post-${draftPost._id}`,
+      },
+    );
+
+    sendMail
+      .sendScheduledEmail(user.email, user.name, draftPost)
+      .catch((err) => console.error("Email send Failed:", err.message));
+
     console.log(`📅 Job added to queue: ${job.id}`);
     console.log(`   Runs at: ${scheduledDate.toISOString()}`);
     console.log(`   Delay:   ${Math.round(delay / 1000 / 60)} minutes`);
 
-        return res.status(201).json({
-            sucess: true,
-            message: `Post scheduled for ${new Date(scheduledAt).toLocaleString()} 📅`,
-            overallStatus: "draft",
-            scheduledAt: draftPost.scheduledAt,
-            jobId:job.id,
-            postId: draftPost._id
-        })
-    }
-    catch (error) {
-        console.error('schedulePost error:', error.message);
-        return res.status(500).json({
-            success: false,
-            error: 'Internal Server Error'
-        });
-    }
-}
-
-const cancelScheduledPost = async (req, res) => {
-    try {
-        const post = await postModel.findOne({
-            _id:           req.params.id,
-            userId:        req.user.id,
-            overallStatus: 'draft'
-        });
-
-        if (!post) {
-            return res.status(404).json({
-                success: false,
-                error: 'Scheduled post not found'
-            });
-        }
-
-        // ── Remove job from BullMQ ─────────────────────────
-        const jobId = `post-${post._id}`;
-        const job   = await postQueue.getJob(jobId);
-
-        if (job) {
-            await job.remove();
-            // ↑ removes job from Redis queue
-            console.log(`🗑️ Job removed from queue: ${jobId}`);
-        }
-
-        // ── Delete post from MongoDB ───────────────────────
-        await postModel.findByIdAndDelete(req.params.id);
-
-        return res.status(200).json({
-            success: true,
-            message: 'Scheduled post cancelled ✅'
-        });
-
-    } catch (error) {
-        console.error('cancelScheduledPost error:', error);
-        return res.status(500).json({
-            success: false,
-            error: 'Internal Server Error'
-        });
-    }
+    return res.status(201).json({
+      sucess: true,
+      message: `Post scheduled for ${new Date(scheduledAt).toLocaleString()} 📅`,
+      overallStatus: "draft",
+      scheduledAt: draftPost.scheduledAt,
+      jobId: job.id,
+      postId: draftPost._id,
+    });
+  } catch (error) {
+    console.error("schedulePost error:", error.message);
+    return res.status(500).json({
+      success: false,
+      error: "Internal Server Error",
+    });
+  }
 };
 
+const cancelScheduledPost = async (req, res) => {
+  try {
+    const post = await postModel.findOne({
+      _id: req.params.id,
+      userId: req.user.id,
+      overallStatus: "draft",
+    });
+
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        error: "Scheduled post not found",
+      });
+    }
+
+    // ── Remove job from BullMQ ─────────────────────────
+    const jobId = `post-${post._id}`;
+    const job = await postQueue.getJob(jobId);
+
+    if (job) {
+      await job.remove();
+      // ↑ removes job from Redis queue
+      console.log(`🗑️ Job removed from queue: ${jobId}`);
+    }
+
+    // ── Delete post from MongoDB ───────────────────────
+    await postModel.findByIdAndDelete(req.params.id);
+
+    return res.status(200).json({
+      success: true,
+      message: "Scheduled post cancelled ✅",
+    });
+  } catch (error) {
+    console.error("cancelScheduledPost error:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Internal Server Error",
+    });
+  }
+};
+
+// most important function
 const publishToPlatforms = async (post, user) => {
+  const platforms = post.platforms;
 
-    const platforms = post.platforms;
+  // posting to linkedin
+  if (platforms.linkedin?.enabled) {
+    console.log("📤 Attempting LinkedIn post...");
 
-    // posting to linkedin
-    if (platforms.linkedin?.enabled) {
-        console.log('📤 Attempting LinkedIn post...');
+    if (!user.platforms?.linkedin?.isConnected) {
+      ((post.platforms.linkedin.status = "failed"),
+        (post.platforms.linkedin.error =
+          "LinkedIn not connected. " + "Visit /api/linkedin/auth first"));
 
-        if (!user.platforms?.linkedin?.isConnected) {
-            post.platforms.linkedin.status = 'failed',
-                post.platforms.linkedin.error = 'LinkedIn not connected. ' + 'Visit /api/linkedin/auth first';
-
-            console.log('❌ LinkedIn not connected');
-        }
-
-        // it means platform is connected now call postTolinkedIn API
-        else {
-            try {
-                
-                const result = await postLinkedIn(
-                    user.platforms.linkedin.accessToken,
-                    user.platforms.linkedin.personUrn,
-                    platforms.linkedin.content,
-                    platforms.linkedin.imageUrl || null
-                );
-
-                // update status after post
-                post.platforms.linkedin.status = 'published';
-                post.platforms.linkedin.postId = result.id;
-                post.platforms.linkedin.postedAt = new Date();
-                post.platforms.linkedin.error = null;
-
-                console.log(`✅ LinkedIn posted: ${result.id}`)
-            }
-            catch (err) {
-                // ❌ LinkedIn API call failed
-                post.platforms.linkedin.status = 'failed';
-                post.platforms.linkedin.error = err.message;
-                console.error(`❌ LinkedIn failed: ${err.message}`);
-            }
-        }
+      console.log("❌ LinkedIn not connected");
     }
 
-    // posting on Fcebook
-    if (platforms.facebook?.enabled) {
+    // it means platform is connected now call postTolinkedIn API
+    else {
+      try {
+        const result = await postLinkedIn(
+          user.platforms.linkedin.accessToken,
+          user.platforms.linkedin.personUrn,
+          platforms.linkedin.content,
+          platforms.linkedin.imageUrl || null,
+        );
 
-        console.log('Attempting Facebook Post');
+        // update status after post
+        post.platforms.linkedin.status = "published";
+        post.platforms.linkedin.postId = result.id;
+        post.platforms.linkedin.postedAt = new Date();
+        post.platforms.linkedin.error = null;
 
-        if (!user.platforms?.facebook?.isConnected) {
-            post.platforms.facebook.status = 'failed';
-            post.platforms.facebook.error = 'Facebook Not Connected Visit /api/facebook/auth first';
-            console.log('Facebook Not Connected');
-        }
-
-        else {
-            try {
-                console.log('PAGE TOKEN:', user.platforms.facebook.pageToken);
-                console.log('PAGE ID:', user.platforms.facebook.pageId);
-                console.log('CONTENT:', platforms.facebook.content);
-                const result = await postToFacebook(
-                    user.platforms.facebook.pageToken,
-                    user.platforms.facebook.pageId,
-                    platforms.facebook.content,
-                    platforms.facebook.imageUrl || null
-                );
-                post.platforms.facebook.status = 'published',
-                    post.platforms.facebook.postId = result.id,
-                    post.platforms.facebook.postedAt = new Date(),
-                    post.platforms.facebook.error = null;
-
-                console.log(`✅ Facebook posted: ${result.id}`);
-            }
-            catch (err) {
-
-                post.platforms.facebook.status = 'failed';
-                post.platforms.facebook.error =
-                    err.response?.data?.error?.message || err.message;
-                console.error('❌ Facebook API Error:');
-                console.error(err.response?.data || err.message);
-            }
-        }
+        console.log(`✅ LinkedIn posted: ${result.id}`);
+      } catch (err) {
+        // ❌ LinkedIn API call failed
+        post.platforms.linkedin.status = "failed";
+        post.platforms.linkedin.error = err.message;
+        console.error(`❌ LinkedIn failed: ${err.message}`);
+      }
     }
-    // posting on instagram
-    if (platforms.instagram?.enabled) {
-        console.log('📤 Attempting Instagram post...')
+  }
 
-        if (!user.platforms?.instagram?.isConnected) {
-            post.platforms.instagram.status = 'failed',
-            post.platforms.instagram.err = 'Instagram is not Connected, Connected Facebook First then Instagram'
-            console.log('❌ Instagram not connected');
-        }
-        // if image not provided return return 
-        else if(!platforms.instagram?.imageUrl){
-            post.platforms.instagram.status='failed',
-            post.platforms.instagram.error='Instagram requires an image'
-        }
+  // posting on Fcebook
+  if (platforms.facebook?.enabled) {
+    console.log("Attempting Facebook Post");
 
-        // it meanse connected so let's move to publish post
-        else {
-            try {
+    if (!user.platforms?.facebook?.isConnected) {
+      post.platforms.facebook.status = "failed";
+      post.platforms.facebook.error =
+        "Facebook Not Connected Visit /api/facebook/auth first";
+      console.log("Facebook Not Connected");
+    } else {
+      try {
+        console.log("PAGE TOKEN:", user.platforms.facebook.pageToken);
+        console.log("PAGE ID:", user.platforms.facebook.pageId);
+        console.log("CONTENT:", platforms.facebook.content);
+        const result = await postToFacebook(
+          user.platforms.facebook.pageToken,
+          user.platforms.facebook.pageId,
+          platforms.facebook.content,
+          platforms.facebook.imageUrl || null,
+        );
+        ((post.platforms.facebook.status = "published"),
+          (post.platforms.facebook.postId = result.id),
+          (post.platforms.facebook.postedAt = new Date()),
+          (post.platforms.facebook.error = null));
 
-                console.log('ISTAGRAM PAGE TOKEN Same as Facebook Token:', user.platforms.instagram.accessToken);
-                console.log('Insta Account ID:', user.platforms.instagram.instagramAccountId);
-                console.log('Instagram Username:', platforms.instagram.instagramUsername);
-                console.log('Instagram CONTENT:', platforms.instagram.content);
+        console.log(`✅ Facebook posted: ${result.id}`);
+      } catch (err) {
+        post.platforms.facebook.status = "failed";
+        post.platforms.facebook.error =
+          err.response?.data?.error?.message || err.message;
+        console.error("❌ Facebook API Error:");
+        console.error(err.response?.data || err.message);
+      }
+    }
+  }
+  // posting on instagram
+  if (platforms.instagram?.enabled) {
+    console.log("📤 Attempting Instagram post...");
 
-                const result = await postToInstagram(
-                    user.platforms.instagram.accessToken,
-                    user.platforms.instagram.instagramAccountId,
-                    platforms.instagram.content,
-                    platforms.instagram.imageUrl
-                );
-                post.platforms.instagram.status = 'published',
-                post.platforms.instagram.postId = result.id;
-                post.platforms.instagram.postedAt = new Date();
-                post.platforms.instagram.error = null;
-                console.log(`✅ Instagram posted: ${result.id}`);
-            }
-            catch (err) {
-                post.platforms.instagram.status = 'failed';
-                post.platforms.instagram.error =
-                    err.response?.data?.error?.message || err.message;
-                console.error('❌ Instagram failed:', err.response?.data || err.message);
-            }
-        }
+    if (!user.platforms?.instagram?.isConnected) {
+      ((post.platforms.instagram.status = "failed"),
+        (post.platforms.instagram.err =
+          "Instagram is not Connected, Connected Facebook First then Instagram"));
+      console.log("❌ Instagram not connected");
+    }
+    // if image not provided return return
+    else if (!platforms.instagram?.imageUrl) {
+      ((post.platforms.instagram.status = "failed"),
+        (post.platforms.instagram.error = "Instagram requires an image"));
     }
 
-    // posting on reddit
+    // it meanse connected so let's move to publish post
+    else {
+      try {
+        console.log(
+          "ISTAGRAM PAGE TOKEN Same as Facebook Token:",
+          user.platforms.instagram.accessToken,
+        );
+        console.log(
+          "Insta Account ID:",
+          user.platforms.instagram.instagramAccountId,
+        );
+        console.log(
+          "Instagram Username:",
+          platforms.instagram.instagramUsername,
+        );
+        console.log("Instagram CONTENT:", platforms.instagram.content);
 
-    // update all post status
-    post.overallStatus = postValidation.deterMineOverallStatus(post.platforms);
+        const result = await postToInstagram(
+          user.platforms.instagram.accessToken,
+          user.platforms.instagram.instagramAccountId,
+          platforms.instagram.content,
+          platforms.instagram.imageUrl,
+        );
+        ((post.platforms.instagram.status = "published"),
+          (post.platforms.instagram.postId = result.id));
+        post.platforms.instagram.postedAt = new Date();
+        post.platforms.instagram.error = null;
+        console.log(`✅ Instagram posted: ${result.id}`);
+      } catch (err) {
+        post.platforms.instagram.status = "failed";
+        post.platforms.instagram.error =
+          err.response?.data?.error?.message || err.message;
+        console.error(
+          "❌ Instagram failed:",
+          err.response?.data || err.message,
+        );
+      }
+    }
+  }
 
-    // save post into database 
-    await post.save();
-    console.log(`💾 Post saved with status: ${post.overallStatus}`);
-    // return post response
-    return post;
-}
+  // posting on reddit
+
+  // update all post status
+  post.overallStatus = postValidation.deterMineOverallStatus(post.platforms);
+  // save post into database
+  await post.save();
+  // ── 🆕 Send email notification ──────────────────────────
+  try {
+    if (
+      post.overallStatus === "published" ||
+      post.overallStatus === "partial"
+    ) {
+      await sendMail.sendPublishEmail(user.email, user.name, post);
+    } else if (post.overallStatus === "failed") {
+      await sendMail.sendFailedEmail(user.email, user.name, post);
+    }
+  } catch (err) {
+    console.error("Email send failed:", err.message);
+  }
+  console.log(`💾 Post saved with status: ${post.overallStatus}`);
+  // return post response
+  return post;
+};
 
 const createPost = async (req, res) => {
+  try {
+    // get request
 
-    try {
-        // get request 
+    const { platforms, scheduledAt, imageUrl } = req.body;
+    const userId = req.user.id;
 
-        const { platforms, scheduledAt, imageUrl } = req.body
-        const userId = req.user.id;
-
-        // check input is valid or not
-        if (!platforms || typeof platforms !== 'object') {
-            return res.status(400).json({
-                success: false,
-                error: "Platform object is required"
-            });
-        }
-
-        // check any one platform is enabled or not 
-        // we use some() fn which is true whn any one value is true 
-        const hasEnabled = Object.values(platforms).some(p => p.enabled);
-
-        if (!hasEnabled) {
-            return res.status(400).json({
-                success: false,
-                error: "Atleast Enable one Platform"
-            });
-        }
-
-        // now validate content as we define validation function in vlidation middleware, lets's check
-
-         console.log("PLATFORMS RECEIVED:",JSON.stringify(platforms, null, 2));
-
-        const validationErrors = postValidation.validatePlatforms(platforms);
-
-        // if any error have then we will return error
-        if (validationErrors.length > 0) {
-            return res.status(400).json({
-                success: false,
-                errors: validationErrors
-                // returns ALL errors at once
-                // so user can fix everything in one go
-            });
-        }
-
-
-        // now lets fetch access token from user's model
-
-        const user = await userModel.findById(userId);
-
-        if (!user) {
-            return res.status(404).json({
-                success: false,
-                error: 'User not found'
-            });
-        }
-
-        // lets save post into DB because if server crashes even we have records of post so we can again try to publish post
-        const newPost = await postModel.create({
-            userId,
-            platforms,
-            overallStatus: 'pending',
-            imageUrl: imageUrl || '',
-            scheduledAt: scheduledAt || null
-        });
-        console.log(`📝 Post created in DB: ${newPost._id}`);
-
-        // now let's call platforms apis to publish a post 
-
-        // // posting on LINKEDIN
-        // if (platforms.linkedin?.enabled) {
-        //     console.log('📤 Attempting LinkedIn post...');
-
-        //     if (!user.platforms?.linkedin.isConnected) {
-        //         newPost.platforms.linkedin.status = 'failed',
-        //             newPost.platforms.linkedin.error = 'LinkedIn not connected. ' + 'Visit /api/linkedin/auth first';
-
-        //         console.log('❌ LinkedIn not connected');
-        //     }
-
-        //     // it means platform is connected now call postTolinkedIn API
-        //     else {
-        //         try {
-        //             const result = await postLinkedIn(
-        //                 user.platforms.linkedin.accessToken,
-        //                 user.platforms.linkedin.personUrn,
-        //                 platforms.linkedin.content
-        //             );
-
-        //             // update status after post
-        //             newPost.platforms.linkedin.status = 'published';
-        //             newPost.platforms.linkedin.postId = result.id;
-        //             newPost.platforms.linkedin.postedAt = new Date();
-        //             newPost.platforms.linkedin.error = null;
-
-        //             console.log(`✅ LinkedIn posted: ${result.id}`)
-        //         }
-        //         catch (err) {
-        //             // ❌ LinkedIn API call failed
-        //             newPost.platforms.linkedin.status = 'failed';
-        //             newPost.platforms.linkedin.error = err.message;
-
-        //             console.error(`❌ LinkedIn failed: ${err.message}`);
-        //         }
-        //     }
-        // }
-
-        // // posting on Fcebook
-        // if (platforms.facebook?.enabled) {
-
-        //     console.log('Attempting Facebook Post');
-
-        //     if (!user.platforms?.facebook.isConnected) {
-        //         newPost.platforms.facebook.status = 'failed';
-        //         newPost.platforms.facebook.err = 'Facebook Not Connected Visit /api/facebook/auth first';
-        //         console.log('Facebook Not Connected');
-        //     }
-
-        //     else {
-        //         try {
-        //             console.log('PAGE TOKEN:', user.platforms.facebook.pageToken);
-        //             console.log('PAGE ID:', user.platforms.facebook.pageId);
-        //             console.log('CONTENT:', platforms.facebook.content);
-        //             const result = await postToFacebook(
-        //                 user.platforms.facebook.pageToken,
-        //                 user.platforms.facebook.pageId,
-        //                 platforms.facebook.content
-        //             );
-        //             newPost.platforms.facebook.status = 'published',
-        //                 newPost.platforms.facebook.postId = result.id,
-        //                 newPost.platforms.facebook.postedAt = new Date(),
-        //                 newPost.platforms.facebook.error = null;
-
-        //             console.log(`✅ Facebook posted: ${result.id}`);
-        //         }
-        //         catch (err) {
-
-        //             newPost.platforms.facebook.status = 'failed';
-
-        //             newPost.platforms.facebook.error =
-        //                 err.response?.data?.error?.message || err.message;
-
-        //             console.error('❌ Facebook API Error:');
-        //             console.error(err.response?.data || err.message);
-        //         }
-        //     }
-        // }
-
-        const result = await publishToPlatforms(newPost, user);
-
-        // return response message
-        const message = {
-            published: 'Posted to all Platforms  🎉',
-            failed: 'Failed to Post on Platforms  ❌',
-            partial: 'Post on Some Platforms ⚠️'
-        }
-        // sending response
-        return res.status(201).json({
-            success: result.overallStatus !== 'failed',
-            overallStatus: result.overallStatus,
-            message: message[result.overallStatus],
-            postId: result._id,
-            platforms: {
-                linkedin: {
-                    status: result.platforms.linkedin.status,
-                    postId: result.platforms.linkedin.postId,
-                    error: result.platforms.linkedin.error,
-                    postedAt: result.platforms.linkedin.postedAt
-                },
-                facebook: {
-                    status: result.platforms.facebook.status,
-                    postId: result.platforms.facebook.postId,
-                    error: result.platforms.facebook.error,
-                    postedAt: result.platforms.facebook.postedAt
-                }
-            }
-
-        })
-    } catch (error) {
-        console.error('createPost error:', error);
-        return res.status(500).json({
-            success: false,
-            error: 'Internal Server Error'
-        });
+    // check input is valid or not
+    if (!platforms || typeof platforms !== "object") {
+      return res.status(400).json({
+        success: false,
+        error: "Platform object is required",
+      });
     }
-}
+
+    // check any one platform is enabled or not
+    // we use some() fn which is true whn any one value is true
+    const hasEnabled = Object.values(platforms).some((p) => p.enabled);
+
+    if (!hasEnabled) {
+      return res.status(400).json({
+        success: false,
+        error: "Atleast Enable one Platform",
+      });
+    }
+
+    // now validate content as we define validation function in vlidation middleware, lets's check
+
+    console.log("PLATFORMS RECEIVED:", JSON.stringify(platforms, null, 2));
+
+    const validationErrors = postValidation.validatePlatforms(platforms);
+
+    // if any error have then we will return error
+    if (validationErrors.length > 0) {
+      return res.status(400).json({
+        success: false,
+        errors: validationErrors,
+        // returns ALL errors at once
+        // so user can fix everything in one go
+      });
+    }
+
+    // now lets fetch access token from user's model
+
+    const user = await userModel.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: "User not found",
+      });
+    }
+
+    // lets save post into DB because if server crashes even we have records of post so we can again try to publish post
+    const newPost = await postModel.create({
+      userId,
+      platforms,
+      overallStatus: "pending",
+      imageUrl: imageUrl || "",
+      scheduledAt: scheduledAt || null,
+    });
+    console.log(`📝 Post created in DB: ${newPost._id}`);
+
+    // now let's call platforms apis to publish a post
+
+    // // posting on LINKEDIN
+    // if (platforms.linkedin?.enabled) {
+    //     console.log('📤 Attempting LinkedIn post...');
+
+    //     if (!user.platforms?.linkedin.isConnected) {
+    //         newPost.platforms.linkedin.status = 'failed',
+    //             newPost.platforms.linkedin.error = 'LinkedIn not connected. ' + 'Visit /api/linkedin/auth first';
+
+    //         console.log('❌ LinkedIn not connected');
+    //     }
+
+    //     // it means platform is connected now call postTolinkedIn API
+    //     else {
+    //         try {
+    //             const result = await postLinkedIn(
+    //                 user.platforms.linkedin.accessToken,
+    //                 user.platforms.linkedin.personUrn,
+    //                 platforms.linkedin.content
+    //             );
+
+    //             // update status after post
+    //             newPost.platforms.linkedin.status = 'published';
+    //             newPost.platforms.linkedin.postId = result.id;
+    //             newPost.platforms.linkedin.postedAt = new Date();
+    //             newPost.platforms.linkedin.error = null;
+
+    //             console.log(`✅ LinkedIn posted: ${result.id}`)
+    //         }
+    //         catch (err) {
+    //             // ❌ LinkedIn API call failed
+    //             newPost.platforms.linkedin.status = 'failed';
+    //             newPost.platforms.linkedin.error = err.message;
+
+    //             console.error(`❌ LinkedIn failed: ${err.message}`);
+    //         }
+    //     }
+    // }
+
+    // // posting on Fcebook
+    // if (platforms.facebook?.enabled) {
+
+    //     console.log('Attempting Facebook Post');
+
+    //     if (!user.platforms?.facebook.isConnected) {
+    //         newPost.platforms.facebook.status = 'failed';
+    //         newPost.platforms.facebook.err = 'Facebook Not Connected Visit /api/facebook/auth first';
+    //         console.log('Facebook Not Connected');
+    //     }
+
+    //     else {
+    //         try {
+    //             console.log('PAGE TOKEN:', user.platforms.facebook.pageToken);
+    //             console.log('PAGE ID:', user.platforms.facebook.pageId);
+    //             console.log('CONTENT:', platforms.facebook.content);
+    //             const result = await postToFacebook(
+    //                 user.platforms.facebook.pageToken,
+    //                 user.platforms.facebook.pageId,
+    //                 platforms.facebook.content
+    //             );
+    //             newPost.platforms.facebook.status = 'published',
+    //                 newPost.platforms.facebook.postId = result.id,
+    //                 newPost.platforms.facebook.postedAt = new Date(),
+    //                 newPost.platforms.facebook.error = null;
+
+    //             console.log(`✅ Facebook posted: ${result.id}`);
+    //         }
+    //         catch (err) {
+
+    //             newPost.platforms.facebook.status = 'failed';
+
+    //             newPost.platforms.facebook.error =
+    //                 err.response?.data?.error?.message || err.message;
+
+    //             console.error('❌ Facebook API Error:');
+    //             console.error(err.response?.data || err.message);
+    //         }
+    //     }
+    // }
+
+    const result = await publishToPlatforms(newPost, user);
+
+    // return response message
+    const message = {
+      published: "Posted to all Platforms  🎉",
+      failed: "Failed to Post on Platforms  ❌",
+      partial: "Post on Some Platforms ⚠️",
+    };
+    // sending response
+    return res.status(201).json({
+      success: result.overallStatus !== "failed",
+      overallStatus: result.overallStatus,
+      message: message[result.overallStatus],
+      postId: result._id,
+      platforms: {
+        linkedin: {
+          status: result.platforms.linkedin.status,
+          postId: result.platforms.linkedin.postId,
+          error: result.platforms.linkedin.error,
+          postedAt: result.platforms.linkedin.postedAt,
+        },
+        facebook: {
+          status: result.platforms.facebook.status,
+          postId: result.platforms.facebook.postId,
+          error: result.platforms.facebook.error,
+          postedAt: result.platforms.facebook.postedAt,
+        },
+      },
+    });
+  } catch (error) {
+    console.error("createPost error:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Internal Server Error",
+    });
+  }
+};
 
 // get all posts by logged in user
 const getUserPosts = async (req, res) => {
-    try {
-        const posts = await postModel
-            .find({ userId: req.user.id })
-            .sort({ createdAt: -1 }); // newest first
+  try {
+    const posts = await postModel
+      .find({ userId: req.user.id })
+      .sort({ createdAt: -1 }); // newest first
 
-        res.status(200).json({
-            success: true,
-            count: posts.length,
-            posts
-        });
-    } catch (error) {
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
+    res.status(200).json({
+      success: true,
+      count: posts.length,
+      posts,
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 };
 
 // get posts by overall status
 const getPostsByStatus = async (req, res) => {
-    try {
-        const status = req.params.status;
-        const validStatuses = ['pending', 'published', 'partial', 'failed', 'draft'];
+  try {
+    const status = req.params.status;
+    const validStatuses = [
+      "pending",
+      "published",
+      "partial",
+      "failed",
+      "draft",
+    ];
 
-        if (!validStatuses.includes(status)) {
-            return res.status(400).json({
-                error: `Invalid status. Must be: ${validStatuses.join(', ')}`
-            });
-        }
-
-        const posts = await postModel
-            .find({ userId: req.user.id, overallStatus: status })
-            .sort({ createdAt: -1 });
-
-        res.status(200).json({ success: true, count: posts.length, posts });
-    } catch (error) {
-        res.status(500).json({ error: 'Internal Server Error' });
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        error: `Invalid status. Must be: ${validStatuses.join(", ")}`,
+      });
     }
+
+    const posts = await postModel
+      .find({ userId: req.user.id, overallStatus: status })
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({ success: true, count: posts.length, posts });
+  } catch (error) {
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 };
 
 // get all scheduled (future draft) posts
 const getScheduledPosts = async (req, res) => {
-    try {
-        const posts = await postModel
-            .find({
-                userId: req.user.id,
-                overallStatus: 'draft',
-                scheduledAt: { $gt: new Date() }
-                //               ↑ only future posts
-            })
-            .sort({ scheduledAt: 1 }); // earliest first
+  try {
+    const posts = await postModel
+      .find({
+        userId: req.user.id,
+        overallStatus: "draft",
+        scheduledAt: { $gt: new Date() },
+        //               ↑ only future posts
+      })
+      .sort({ scheduledAt: 1 }); // earliest first
 
-        res.status(200).json({ success: true, count: posts.length || 'No Scheduled Post', posts });
-    } catch (error) {
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
+    res.status(200).json({
+      success: true,
+      count: posts.length || "No Scheduled Post",
+      posts,
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 };
+
+const getCalendarPosts = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { startDate, endDate } = req.query;
+
+    if (!startDate || !endDate)
+      return res
+        .status(400)
+        .json({ success: false, erroor: "startDate and endDate are required" });
+
+    // lets find all sheduled and published post for selected month
+    const posts = await postModel
+      .find({
+        userId,
+        $or: [
+          {
+            scheduledAt: {
+              $gte: new Date(startDate),
+              $lte: new Date(endDate),
+            },
+          },
+          {
+            scheduledAt: null,
+            createdAt: {
+              $gte: new Date(startDate),
+              $lte: new Date(endDate),
+            },
+          },
+        ],
+      })
+      .select("platforms overallStatus scheduledAt createdAt imageUrl")
+      .sort({ scheduledAt: 1, createdAt: 1 });
+
+    // ── Group posts by date (YYYY-MM-DD) ─────────────────
+    // This makes it easy for frontend to just look up
+    // postsByDate['2026-06-15'] to get that day's posts
+    const postsByDate = {};
+
+    posts.forEach((post) => {
+      // use scheduledAt if exists, otherwise createdAt
+      const dateKey = (post.scheduledAt || post.createdAt)
+        .toISOString()
+        .split("T")[0];
+      // ↑ converts to "2026-06-15" format
+
+      if (!postsByDate[dateKey]) {
+        postsByDate[dateKey] = [];
+      }
+
+      // build lightweight platform summary for calendar card
+      const enabledPlatforms = Object.entries(post.platforms)
+        .filter(([_, data]) => data.enabled)
+        .map(([key, data]) => ({
+          platform: key,
+          status: data.status,
+          content: data.content?.substring(0, 60) || "",
+        }));
+
+      postsByDate[dateKey].push({
+        postId: post._id,
+        overallStatus: post.overallStatus,
+        scheduledAt: post.scheduledAt,
+        createdAt: post.createdAt,
+        platforms: enabledPlatforms,
+        hasImage: !!post.imageUrl,
+      });
+    });
+
+    return res.status(200).json({
+      success: true,
+      postsByDate,
+    });
+  } catch (error) {
+    console.error("getCalendarPosts error:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Failed to fetch calendar posts",
+    });
+  }
+};
+
 module.exports = {
-    createPost,
-    getUserPosts,
-    getPostsByStatus,
-    getScheduledPosts,
-    cancelScheduledPost,
-    publishToPlatforms,
-    schedulePost
+  createPost,
+  getUserPosts,
+  getPostsByStatus,
+  getScheduledPosts,
+  cancelScheduledPost,
+  publishToPlatforms,
+  schedulePost,
+  getCalendarPosts
 };
