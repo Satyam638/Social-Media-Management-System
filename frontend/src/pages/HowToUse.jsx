@@ -1,494 +1,278 @@
 // src/pages/HowToUse.jsx
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 
-// ── Icons ────────────────────────────────────────────────────────────────────
-const LinkedInIcon = ({ size = 20 }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-        <rect width="24" height="24" rx="4" fill="#0A66C2"/>
-        <path d="M7.5 9.5H5V19H7.5V9.5Z" fill="white"/>
-        <circle cx="6.25" cy="6.75" r="1.5" fill="white"/>
-        <path d="M19 19H16.5V14C16.5 12.9 15.85 12 14.75 12C13.65 12 13 12.9 13 14V19H10.5V9.5H13V10.75C13.55 9.9 14.6 9.25 15.75 9.25C17.6 9.25 19 10.65 19 12.75V19Z" fill="white"/>
-    </svg>
-);
-const FacebookIcon = ({ size = 20 }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-        <rect width="24" height="24" rx="4" fill="#1877F2"/>
-        <path d="M13.5 12.5H15.5L16 10H13.5V8.5C13.5 7.8 13.8 7.25 14.75 7.25H16V5.1C15.45 5.05 14.7 5 13.9 5C11.8 5 10.5 6.2 10.5 8.25V10H8V12.5H10.5V19H13.5V12.5Z" fill="white"/>
-    </svg>
-);
-const InstagramIcon = ({ size = 20 }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-        <defs>
-            <linearGradient id="ig-htu" x1="0%" y1="100%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#FFDC80"/>
-                <stop offset="50%" stopColor="#F77737"/>
-                <stop offset="100%" stopColor="#833AB4"/>
-            </linearGradient>
-        </defs>
-        <rect width="24" height="24" rx="6" fill="url(#ig-htu)"/>
-        <rect x="6" y="6" width="12" height="12" rx="4" stroke="white" strokeWidth="1.5" fill="none"/>
-        <circle cx="12" cy="12" r="3" stroke="white" strokeWidth="1.5" fill="none"/>
-        <circle cx="16.5" cy="7.5" r="1" fill="white"/>
-    </svg>
+const FontStyles = () => (
+    <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap');
+        * { box-sizing: border-box; }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:none} }
+        .fade-up { animation: fadeUp .5s ease-out forwards; }
+    `}</style>
 );
 
-const CheckIcon = ({ size = 16 }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="20 6 9 17 4 12"/>
-    </svg>
-);
-const XIcon = ({ size = 16 }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-    </svg>
-);
-const ChevronIcon = ({ open }) => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-        className={`transition-transform duration-200 ${open ? 'rotate-180' : ''}`}>
-        <polyline points="6 9 12 15 18 9"/>
-    </svg>
-);
-
-// ── FAQ accordion item ────────────────────────────────────────────────────────
-function FAQItem({ q, a }) {
-    const [open, setOpen] = useState(false);
-    return (
-        <div className={`border rounded-xl overflow-hidden transition-all duration-200 ${open ? 'border-indigo-200 bg-indigo-50/40' : 'border-gray-200 bg-white'}`}>
-            <button
-                onClick={() => setOpen(!open)}
-                className="w-full flex items-center justify-between px-5 py-4 text-left gap-4"
-            >
-                <span className={`text-sm font-medium ${open ? 'text-indigo-700' : 'text-gray-800'}`}>{q}</span>
-                <span className={`flex-shrink-0 ${open ? 'text-indigo-500' : 'text-gray-400'}`}>
-                    <ChevronIcon open={open} />
-                </span>
-            </button>
-            {open && (
-                <div className="px-5 pb-4 text-sm text-gray-600 leading-relaxed border-t border-indigo-100">
-                    <div className="pt-3">{a}</div>
-                </div>
-            )}
-        </div>
-    );
-}
-
-// ── Data ─────────────────────────────────────────────────────────────────────
-const platforms = [
-    {
-        icon: <LinkedInIcon size={28} />,
-        name: 'LinkedIn',
-        bg: 'bg-blue-50',
-        border: 'border-blue-200',
-        tag: 'Personal profile or Company page',
-        tagColor: 'bg-blue-100 text-blue-700',
-        needs: [
-            { ok: true,  text: 'A personal LinkedIn account' },
-            { ok: true,  text: 'Access to your LinkedIn profile or company page' },
-            { ok: false, text: 'No special page required — your profile works' },
-        ],
-        note: 'OneSocial connects via LinkedIn OAuth. It posts on behalf of your personal profile or a company page you manage.',
-    },
-    {
-        icon: <FacebookIcon size={28} />,
-        name: 'Facebook',
-        bg: 'bg-blue-50',
-        border: 'border-blue-200',
-        tag: 'Facebook PAGE required (not personal)',
-        tagColor: 'bg-orange-100 text-orange-700',
-        needs: [
-            { ok: true,  text: 'A personal Facebook account (to log in)' },
-            { ok: true,  text: 'A Facebook Page that YOU manage (business/creator)' },
-            { ok: false, text: 'Cannot post to a personal timeline — Pages only' },
-        ],
-        note: '⚠️ Important: Facebook\'s API only allows posting to Pages, not personal profiles. If you don\'t have a Page, create one free at facebook.com/pages/create.',
-    },
-    {
-        icon: <InstagramIcon size={28} />,
-        name: 'Instagram',
-        bg: 'bg-pink-50',
-        border: 'border-pink-200',
-        tag: 'Professional/Business account required',
-        tagColor: 'bg-pink-100 text-pink-700',
-        needs: [
-            { ok: true,  text: 'Instagram account switched to Professional (Creator or Business)' },
-            { ok: true,  text: 'Instagram account connected to a Facebook Page' },
-            { ok: false, text: 'Cannot post to a personal Instagram account' },
-        ],
-        note: '⚠️ Important: Instagram\'s API requires a Professional account linked to a Facebook Page. Go to Instagram Settings → Account → Switch to Professional Account.',
-    },
-];
+const LinkedInIcon  = ({ size=18 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="none"><rect width="24" height="24" rx="6" fill="#0A66C2"/><path d="M7.5 9.5H5V19H7.5V9.5Z" fill="white"/><circle cx="6.25" cy="6.75" r="1.5" fill="white"/><path d="M19 19H16.5V14C16.5 12.9 15.85 12 14.75 12C13.65 12 13 12.9 13 14V19H10.5V9.5H13V10.75C13.55 9.9 14.6 9.25 15.75 9.25C17.6 9.25 19 10.65 19 12.75V19Z" fill="white"/></svg>);
+const FacebookIcon  = ({ size=18 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="none"><rect width="24" height="24" rx="6" fill="#1877F2"/><path d="M13.5 12.5H15.5L16 10H13.5V8.5C13.5 7.8 13.8 7.25 14.75 7.25H16V5.1C15.45 5.05 14.7 5 13.9 5C11.8 5 10.5 6.2 10.5 8.25V10H8V12.5H10.5V19H13.5V12.5Z" fill="white"/></svg>);
+const InstagramIcon = ({ size=18 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="none"><defs><linearGradient id="ig-htw" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stopColor="#FFDC80"/><stop offset="50%" stopColor="#F77737"/><stop offset="100%" stopColor="#833AB4"/></linearGradient></defs><rect width="24" height="24" rx="6" fill="url(#ig-htw)"/><rect x="6" y="6" width="12" height="12" rx="4" stroke="white" strokeWidth="1.5" fill="none"/><circle cx="12" cy="12" r="3" stroke="white" strokeWidth="1.5" fill="none"/><circle cx="16.5" cy="7.5" r="1" fill="white"/></svg>);
 
 const steps = [
     {
-        num: '01',
-        icon: '📝',
-        title: 'Create your OneSocial account',
-        color: 'bg-indigo-50 border-indigo-200',
-        numColor: 'text-indigo-400 bg-indigo-50',
-        items: [
-            'Click "Get Started Free" on the home page',
-            'Enter your name, email and password',
-            'Check your email for a 6-digit verification code',
-            'Enter the code to verify your email',
-            'You\'re in — login to reach your dashboard',
+        num: '01', icon: '🔗', title: 'Create your account',
+        desc: 'Sign up with your email, verify it with the OTP we send, and you\'re in. Takes about 60 seconds.',
+        detail: [
+            'Click "Create free account" on the home page',
+            'Fill in your name, email and password',
+            'Check your inbox for a 6-digit verification code',
+            'Enter the code to activate your account',
         ],
     },
     {
-        num: '02',
-        icon: '🔗',
-        title: 'Connect your social platforms',
-        color: 'bg-blue-50 border-blue-200',
-        numColor: 'text-blue-400 bg-blue-50',
-        items: [
-            'Open your Dashboard and find the Platforms section in the sidebar',
-            'Click "Connect" next to LinkedIn — you\'ll be redirected to LinkedIn to approve',
-            'Click "Connect" next to Facebook — this also connects Instagram automatically if your Instagram is linked to that Page',
-            'Wait for the green "Live" dot to appear next to each platform',
-            'If a platform shows a warning, check the requirements below',
+        num: '02', icon: '🔌', title: 'Connect your platforms',
+        desc: 'Link LinkedIn, Facebook and Instagram through official OAuth. We never see or store your passwords.',
+        detail: [
+            'Go to the Dashboard and click "Connect" next to each platform',
+            'You\'ll be redirected to the platform\'s official login page',
+            'Approve the permissions and you\'ll be sent back automatically',
+            'A green indicator means you\'re connected and ready to post',
         ],
     },
     {
-        num: '03',
-        icon: '✍️',
-        title: 'Write or generate your content',
-        color: 'bg-violet-50 border-violet-200',
-        numColor: 'text-violet-400 bg-violet-50',
-        items: [
-            'Go to the Compose tab on your dashboard',
-            'Select the platforms you want to post to (LinkedIn, Facebook, Instagram)',
-            'Write custom content for each platform — or use the AI Caption Generator',
-            'For AI: type your topic (e.g. "New product launch"), pick a tone, select platforms, and click Generate',
-            'Click "Use this" on any AI caption to auto-fill it into the compose box',
-            'For Instagram posts, paste an image URL in the Image URL field (required)',
+        num: '03', icon: '✍️', title: 'Write or generate content',
+        desc: 'Type your post manually with different content per platform, or use the AI generator to draft everything in one click.',
+        detail: [
+            'In the Compose tab, select which platforms to post to',
+            'Write different captions per platform in the tabbed editor',
+            'Or use the AI Caption Generator — enter a topic and tone',
+            'AI generates 3 captions per platform, pick the one you like',
         ],
     },
     {
-        num: '04',
-        icon: '🚀',
-        title: 'Publish or schedule',
-        color: 'bg-green-50 border-green-200',
-        numColor: 'text-green-400 bg-green-50',
-        items: [
-            'Choose "Post now" to publish immediately to all selected platforms',
+        num: '04', icon: '🖼️', title: 'Add images (optional)',
+        desc: 'Upload images directly from your device. Instagram posts require an image — LinkedIn and Facebook make it optional.',
+        detail: [
+            'Click the image upload area under each platform\'s text box',
+            'Upload JPG, PNG, or WebP — up to 10MB',
+            'The image is uploaded to our secure media server',
+            'Instagram requires an image; LinkedIn and Facebook don\'t',
+        ],
+    },
+    {
+        num: '05', icon: '🚀', title: 'Publish or schedule',
+        desc: 'Send your post live to all selected platforms immediately, or pick a future date and time — OneSocial handles the rest.',
+        detail: [
+            'Choose "Post now" to publish immediately',
             'Choose "Schedule" to pick a future date and time',
             'Click "Publish now" or "Schedule post"',
-            'Check the Published or Scheduled tabs to see your posts',
-            'View your Analytics page to track success rates and history',
+            'Your post appears in the Published or Scheduled tab',
+        ],
+    },
+    {
+        num: '06', icon: '📊', title: 'Track your performance',
+        desc: 'Open Analytics to see how many posts you\'ve published per platform, your success rate, and a 30-day posting history.',
+        detail: [
+            'Click "Analytics" in the sidebar',
+            'See total posts, published vs failed, and success rates',
+            'View the 30-day timeline chart with per-day hover tooltips',
+            'Check recent activity at the bottom of the page',
         ],
     },
 ];
 
 const faqs = [
-    {
-        q: 'Can I post to my personal Facebook profile?',
-        a: 'No — Facebook\'s official API only allows posting to Facebook Pages (business or creator pages), not personal timelines. This is a Facebook limitation, not OneSocial\'s. You need to create a free Facebook Page at facebook.com/pages/create and manage it from your account.',
-    },
-    {
-        q: 'Why does Instagram need a Facebook Page?',
-        a: 'Instagram\'s Content Publishing API (used by all scheduling tools) requires your Instagram account to be a Professional account (Creator or Business) AND connected to a Facebook Page. This is a requirement set by Meta. Go to Instagram → Settings → Account → Switch to Professional Account, then link it to your Facebook Page.',
-    },
-    {
-        q: 'What happens if I post to Instagram without an image?',
-        a: 'Instagram requires an image for all feed posts via the API. If you don\'t include an image URL, the Instagram post will fail while LinkedIn and Facebook may succeed. Always add a publicly accessible image URL when posting to Instagram.',
-    },
-    {
-        q: 'Can I connect multiple Facebook Pages?',
-        a: 'Currently OneSocial connects to one Facebook Page at a time — whichever Page is returned first from your account. Multi-page support is on the roadmap.',
-    },
-    {
-        q: 'Why is my LinkedIn connection showing as failed?',
-        a: 'LinkedIn OAuth tokens expire after 60 days. If your connection stops working, go to the sidebar, click Disconnect next to LinkedIn, then reconnect. You\'ll be asked to approve access again.',
-    },
-    {
-        q: 'Can I edit a post after scheduling it?',
-        a: 'Not yet — post editing is coming soon. For now, if you need to change a scheduled post, contact support or wait for the update. You can see all scheduled posts in the Scheduled tab.',
-    },
-    {
-        q: 'Is the AI caption generator free?',
-        a: 'Yes — AI captions are included for free. You can generate captions for any platform in any tone (professional, casual, funny, inspirational, educational) as many times as you like.',
-    },
-    {
-        q: 'What image formats work for Instagram?',
-        a: 'Instagram supports JPEG and PNG images. The image must be hosted at a publicly accessible URL (not localhost, not a Google Drive link). Use services like Cloudinary, Imgur, or any public CDN. Minimum resolution is 320px, maximum is 1440px.',
-    },
-    {
-        q: 'Does OneSocial store my social media passwords?',
-        a: 'Never. OneSocial uses OAuth — you log in directly on LinkedIn or Facebook\'s website and they issue an access token to OneSocial. Your passwords are never seen or stored by us.',
-    },
-    {
-        q: 'Can I use OneSocial for a client\'s social media accounts?',
-        a: 'Yes — as long as you have admin access to their Facebook Page, LinkedIn Company Page, or Instagram Professional account, you can connect and post on their behalf.',
-    },
+    { q:'Is OneSocial free?',                ans:'Yes, completely free to use. No credit card required, no hidden fees.' },
+    { q:'Which platforms are supported?',    ans:'LinkedIn, Facebook (Pages), and Instagram. Twitter/X support is coming soon.' },
+    { q:'Does OneSocial store my passwords?',ans:'No. We use official OAuth for every platform. Your social media passwords are never sent to or stored by OneSocial.' },
+    { q:'Can I post different content per platform?', ans:'Yes. The composer has a separate tab for each selected platform so you can write different captions for each one.' },
+    { q:'What happens if a post fails?',     ans:'You\'ll see a failure status in the Published tab and on the Analytics page. Check that your platform is still connected and try again.' },
+    { q:'Can I cancel a scheduled post?',    ans:'Yes. Go to the Scheduled tab, find the post, and click "Cancel scheduled post." It will be removed from the queue.' },
+    { q:'How does the AI caption generator work?', ans:'You enter a topic and choose a tone (professional, casual, funny, etc.). OneSocial sends that to Groq AI and gets back 3 caption options per platform, each tailored to that platform\'s style and character limit.' },
 ];
 
-const charLimits = [
-    { platform: 'LinkedIn',  icon: <LinkedInIcon size={18} />,  limit: '3,000 characters',  tip: 'Best: 150–300 chars for feed posts. Longer posts work well for thought leadership.' },
-    { platform: 'Facebook',  icon: <FacebookIcon size={18} />,  limit: '63,206 characters', tip: 'Best: 40–80 chars gets the most engagement. Short and punchy wins on Facebook.' },
-    { platform: 'Instagram', icon: <InstagramIcon size={18} />, limit: '2,200 characters',  tip: 'Best: Caption + 3–5 hashtags. Always include an image — it\'s required by the API.' },
-];
-
-// ── Component ─────────────────────────────────────────────────────────────────
 export default function HowToUse() {
     const navigate = useNavigate();
-    const [activeSection, setActiveSection] = useState('platforms');
-
-    const sections = [
-        { key: 'platforms', label: '📋 Platform requirements' },
-        { key: 'steps',     label: '🪜 Step-by-step guide' },
-        { key: 'limits',    label: '📏 Character limits' },
-        { key: 'faq',       label: '❓ FAQ' },
-    ];
+    const [openFaq, setOpenFaq] = useState(null);
+    const [activeStep, setActiveStep] = useState(0);
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div style={{ minHeight:'100vh', background:'#FFF4E1', fontFamily:'Inter,sans-serif', color:'#1A312C' }}>
+            <FontStyles/>
 
-            {/* ── Navbar ────────────────────────────────────────────────── */}
-            <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
-                <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-                    <button onClick={() => navigate('/')} className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-sm">OS</div>
-                        <div>
-                            <p className="text-sm font-semibold text-gray-900 leading-none">OneSocial</p>
-                            <p className="text-xs text-gray-400 leading-none mt-0.5">How to use</p>
+            {/* Navbar */}
+            <nav style={{ position:'sticky', top:0, zIndex:50, background:'rgba(255,244,225,.92)', backdropFilter:'blur(12px)', borderBottom:'1px solid rgba(26,49,44,.1)' }}>
+                <div style={{ maxWidth:1100, margin:'0 auto', padding:'0 24px', height:60, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                    <button onClick={()=>navigate('/')} style={{ display:'flex', alignItems:'center', gap:9, background:'none', border:'none', cursor:'pointer', padding:0 }}>
+                        <div style={{ width:30, height:30, borderRadius:8, background:'#1A312C', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                            <span style={{ fontFamily:'Space Grotesk,sans-serif', fontWeight:700, fontSize:10, color:'#89D7B7' }}>OS</span>
                         </div>
+                        <span style={{ fontFamily:'Space Grotesk,sans-serif', fontWeight:600, fontSize:14, color:'#1A312C' }}>OneSocial</span>
                     </button>
-                    <div className="flex items-center gap-3">
-                        <button onClick={() => navigate('/login')} className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-indigo-600 rounded-lg hover:bg-indigo-50 transition-all">Login</button>
-                        <button onClick={() => navigate('/register')} className="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-all">Get started free</button>
+                    <div style={{ display:'flex', gap:8 }}>
+                        <button onClick={()=>navigate('/login')} style={{ padding:'8px 16px', background:'none', border:'1.5px solid rgba(26,49,44,.15)', borderRadius:9, fontSize:12, fontWeight:600, cursor:'pointer', color:'#428475', fontFamily:'Inter,sans-serif' }}>Sign in</button>
+                        <button onClick={()=>navigate('/register')} style={{ padding:'8px 16px', background:'#1A312C', color:'#89D7B7', border:'none', borderRadius:9, fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'Inter,sans-serif' }}>Get started →</button>
                     </div>
                 </div>
             </nav>
 
-            {/* ── Hero ──────────────────────────────────────────────────── */}
-            <section className="bg-white border-b border-gray-100">
-                <div className="max-w-4xl mx-auto px-6 py-16 text-center">
-                    <div className="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-5">
-                        📖 Complete user guide
-                    </div>
-                    <h1 className="text-4xl font-bold text-gray-900 mb-4">How to use OneSocial</h1>
-                    <p className="text-lg text-gray-500 max-w-2xl mx-auto leading-relaxed">
-                        Everything you need to know — what accounts to set up, how to connect platforms,
-                        what the limits are, and answers to common questions.
-                    </p>
-                    {/* Quick jump buttons */}
-                    <div className="flex flex-wrap justify-center gap-2 mt-8">
-                        {sections.map(s => (
-                            <button
-                                key={s.key}
-                                onClick={() => {
-                                    setActiveSection(s.key);
-                                    document.getElementById(s.key)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                }}
-                                className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:border-indigo-300 hover:text-indigo-600 transition-all"
-                            >
-                                {s.label}
+            {/* Hero */}
+            <section style={{ background:'#1A312C', padding:'64px 24px 56px', textAlign:'center' }}>
+                <span style={{ fontFamily:'JetBrains Mono,monospace', fontSize:10, color:'rgba(137,215,183,.5)', textTransform:'uppercase', letterSpacing:'0.12em' }}>Guides</span>
+                <h1 style={{ fontFamily:'Space Grotesk,sans-serif', fontSize:44, fontWeight:700, color:'#fff', margin:'12px 0 16px', letterSpacing:'-0.02em' }}>How to use OneSocial</h1>
+                <p style={{ fontSize:15, color:'rgba(137,215,183,.65)', maxWidth:520, margin:'0 auto 32px', lineHeight:1.75 }}>
+                    From creating your account to publishing across three platforms — here's everything you need to get started.
+                </p>
+                {/* Platform chips */}
+                <div style={{ display:'flex', justifyContent:'center', gap:10, flexWrap:'wrap' }}>
+                    {[[LinkedInIcon,'LinkedIn'],[FacebookIcon,'Facebook'],[InstagramIcon,'Instagram']].map(([Icon,l]) => (
+                        <div key={l} style={{ display:'flex', alignItems:'center', gap:7, padding:'7px 14px', background:'rgba(137,215,183,.08)', border:'1px solid rgba(137,215,183,.15)', borderRadius:999 }}>
+                            <Icon size={15}/><span style={{ fontSize:12, color:'rgba(137,215,183,.8)', fontWeight:500 }}>{l}</span>
+                        </div>
+                    ))}
+                </div>
+            </section>
+
+            {/* Interactive step guide */}
+            <section style={{ maxWidth:1100, margin:'0 auto', padding:'56px 24px' }}>
+                <div style={{ display:'grid', gridTemplateColumns:'260px 1fr', gap:24, alignItems:'start' }}>
+                    {/* Step nav */}
+                    <div style={{ position:'sticky', top:80, background:'#fff', borderRadius:18, border:'1.5px solid rgba(26,49,44,.08)', overflow:'hidden' }}>
+                        {steps.map((s,i) => (
+                            <button key={i} onClick={()=>setActiveStep(i)}
+                                style={{ width:'100%', display:'flex', alignItems:'center', gap:12, padding:'14px 18px', border:'none', borderBottom: i<steps.length-1?'1px solid rgba(26,49,44,.07)':'none', cursor:'pointer', textAlign:'left', transition:'background .15s',
+                                    background: activeStep===i ? '#1A312C' : 'transparent' }}>
+                                <span style={{ fontFamily:'JetBrains Mono,monospace', fontSize:10, fontWeight:600, minWidth:20,
+                                    color: activeStep===i ? '#89D7B7' : 'rgba(26,49,44,.3)' }}>{s.num}</span>
+                                <span style={{ fontSize:13, fontWeight:600, fontFamily:'Inter,sans-serif',
+                                    color: activeStep===i ? '#fff' : '#428475' }}>{s.title}</span>
                             </button>
+                        ))}
+                    </div>
+
+                    {/* Step detail */}
+                    <div key={activeStep} className="fade-up" style={{ background:'#fff', borderRadius:18, border:'1.5px solid rgba(26,49,44,.08)', padding:32 }}>
+                        <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:20 }}>
+                            <div style={{ width:52, height:52, borderRadius:14, background:'#1A312C', display:'flex', alignItems:'center', justifyContent:'center', fontSize:24, flexShrink:0 }}>{steps[activeStep].icon}</div>
+                            <div>
+                                <span style={{ fontFamily:'JetBrains Mono,monospace', fontSize:10, color:'#428475', textTransform:'uppercase', letterSpacing:'0.1em' }}>Step {steps[activeStep].num}</span>
+                                <h2 style={{ fontFamily:'Space Grotesk,sans-serif', fontSize:22, fontWeight:700, color:'#1A312C', margin:'4px 0 0', letterSpacing:'-0.01em' }}>{steps[activeStep].title}</h2>
+                            </div>
+                        </div>
+                        <p style={{ fontSize:14, color:'#428475', lineHeight:1.75, margin:'0 0 24px', maxWidth:560 }}>{steps[activeStep].desc}</p>
+                        <div style={{ background:'#FAFAF5', borderRadius:14, padding:'20px 24px', border:'1.5px solid rgba(26,49,44,.07)' }}>
+                            <p style={{ fontFamily:'Space Grotesk,sans-serif', fontWeight:600, fontSize:12, color:'#1A312C', margin:'0 0 14px', textTransform:'uppercase', letterSpacing:'0.05em' }}>Step by step</p>
+                            <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+                                {steps[activeStep].detail.map((d,i) => (
+                                    <div key={i} style={{ display:'flex', alignItems:'flex-start', gap:12 }}>
+                                        <div style={{ width:22, height:22, borderRadius:'50%', background:'#1A312C', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, marginTop:1 }}>
+                                            <span style={{ fontFamily:'JetBrains Mono,monospace', fontSize:9, fontWeight:600, color:'#89D7B7' }}>{i+1}</span>
+                                        </div>
+                                        <p style={{ fontSize:13, color:'#1A312C', margin:0, lineHeight:1.6 }}>{d}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        {/* Prev / Next */}
+                        <div style={{ display:'flex', justifyContent:'space-between', marginTop:24 }}>
+                            <button disabled={activeStep===0} onClick={()=>setActiveStep(p=>p-1)}
+                                style={{ padding:'9px 18px', borderRadius:10, border:'1.5px solid rgba(26,49,44,.15)', background:'transparent', color: activeStep===0?'rgba(26,49,44,.25)':'#1A312C', fontSize:12, fontWeight:600, cursor: activeStep===0?'default':'pointer', fontFamily:'Inter,sans-serif' }}>
+                                ← Previous
+                            </button>
+                            {activeStep < steps.length-1 ? (
+                                <button onClick={()=>setActiveStep(p=>p+1)}
+                                    style={{ padding:'9px 18px', borderRadius:10, border:'none', background:'#1A312C', color:'#89D7B7', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'Inter,sans-serif' }}>
+                                    Next →
+                                </button>
+                            ) : (
+                                <button onClick={()=>navigate('/register')}
+                                    style={{ padding:'9px 18px', borderRadius:10, border:'none', background:'#89D7B7', color:'#1A312C', fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:'Inter,sans-serif' }}>
+                                    Get started →
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Tips strip */}
+            <section style={{ background:'#1A312C', padding:'48px 24px' }}>
+                <div style={{ maxWidth:1100, margin:'0 auto' }}>
+                    <p style={{ fontFamily:'JetBrains Mono,monospace', fontSize:10, color:'rgba(137,215,183,.4)', textTransform:'uppercase', letterSpacing:'0.12em', margin:'0 0 8px' }}>Pro tips</p>
+                    <h2 style={{ fontFamily:'Space Grotesk,sans-serif', fontSize:26, fontWeight:700, color:'#fff', margin:'0 0 28px', letterSpacing:'-0.01em' }}>Get the most out of OneSocial</h2>
+                    <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:16 }}>
+                        {[
+                            { icon:'🎨', tip:'Write different captions per platform', desc:'LinkedIn values professional insight. Instagram works better with hashtags and a casual tone. Don\'t use the same text for both.' },
+                            { icon:'📅', tip:'Schedule a week ahead in one session', desc:'Use the scheduler to queue up 5–7 posts on a Sunday. Your content goes out automatically without you being online.' },
+                            { icon:'✨', tip:'Use AI as a starting point', desc:'The AI generator gives you 3 options. Pick the closest one and tweak it to match your voice — it\'s faster than writing from scratch.' },
+                        ].map((t,i) => (
+                            <div key={i} style={{ background:'rgba(137,215,183,.06)', borderRadius:16, padding:'20px', border:'1px solid rgba(137,215,183,.12)' }}>
+                                <div style={{ fontSize:24, marginBottom:10 }}>{t.icon}</div>
+                                <p style={{ fontFamily:'Space Grotesk,sans-serif', fontWeight:600, fontSize:13, color:'#fff', margin:'0 0 8px' }}>{t.tip}</p>
+                                <p style={{ fontSize:12, color:'rgba(137,215,183,.55)', lineHeight:1.65, margin:0 }}>{t.desc}</p>
+                            </div>
                         ))}
                     </div>
                 </div>
             </section>
 
-            <div className="max-w-4xl mx-auto px-6 py-12 space-y-16">
-
-                {/* ── Platform Requirements ─────────────────────────── */}
-                <section id="platforms">
-                    <div className="mb-8">
-                        <div className="flex items-center gap-3 mb-2">
-                            <span className="text-2xl">📋</span>
-                            <h2 className="text-2xl font-bold text-gray-900">Platform requirements</h2>
-                        </div>
-                        <p className="text-gray-500 text-sm leading-relaxed">
-                            Before connecting a platform, make sure your account meets these requirements.
-                            This is the most common reason connections fail.
-                        </p>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch">
-                        {platforms.map((p, i) => (
-                            <div key={i} className={`${p.bg} border ${p.border} rounded-2xl p-5 flex flex-col`}>
-
-                                {/* Header — icon + name on one line */}
-                                <div className="flex items-center gap-2.5 mb-2">
-                                    {p.icon}
-                                    <h3 className="text-sm font-bold text-gray-900">{p.name}</h3>
-                                </div>
-
-                                {/* Badge on its own row so it never wraps awkwardly */}
-                                <span className={`self-start text-xs font-semibold px-2.5 py-1 rounded-full mb-4 ${p.tagColor}`}>
-                                    {p.tag}
-                                </span>
-
-                                {/* Requirements list — grows to fill card height */}
-                                <ul className="space-y-2.5 mb-4 flex-1">
-                                    {p.needs.map((n, j) => (
-                                        <li key={j} className="flex items-start gap-2 text-xs text-gray-700 leading-relaxed">
-                                            <span className={`mt-0.5 flex-shrink-0 ${n.ok ? 'text-green-600' : 'text-red-500'}`}>
-                                                {n.ok ? <CheckIcon size={13} /> : <XIcon size={13} />}
-                                            </span>
-                                            {n.text}
-                                        </li>
-                                    ))}
-                                </ul>
-
-                                {/* Note — pinned to bottom of card */}
-                                <p className="text-xs text-gray-500 leading-relaxed bg-white/70 rounded-xl p-3 border border-white">
-                                    {p.note}
-                                </p>
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Big warning box */}
-                    <div className="mt-6 bg-amber-50 border border-amber-200 rounded-2xl p-5">
-                        <div className="flex items-start gap-3">
-                            <span className="text-2xl flex-shrink-0">⚠️</span>
-                            <div>
-                                <h4 className="text-sm font-semibold text-amber-900 mb-2">Before you connect Facebook & Instagram</h4>
-                                <div className="text-sm text-amber-800 space-y-1.5 leading-relaxed">
-                                    <p><strong>1.</strong> Create a <strong>Facebook Page</strong> (not a personal profile) at <span className="font-mono bg-amber-100 px-1 rounded text-xs">facebook.com/pages/create</span></p>
-                                    <p><strong>2.</strong> Switch your Instagram to a <strong>Professional account</strong> — go to Instagram → Settings → Account → Switch to Professional Account</p>
-                                    <p><strong>3.</strong> <strong>Link your Instagram</strong> to that Facebook Page — go to Facebook Page Settings → Instagram → Connect account</p>
-                                    <p><strong>4.</strong> Then come back and click Connect Facebook in OneSocial — this will connect both Facebook and Instagram in one step.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                {/* ── Step by step ──────────────────────────────────── */}
-                <section id="steps">
-                    <div className="mb-8">
-                        <div className="flex items-center gap-3 mb-2">
-                            <span className="text-2xl">🪜</span>
-                            <h2 className="text-2xl font-bold text-gray-900">Step-by-step guide</h2>
-                        </div>
-                        <p className="text-gray-500 text-sm">Follow these steps in order to go from zero to publishing your first post.</p>
-                    </div>
-
-                    <div className="space-y-5">
-                        {steps.map((s, i) => (
-                            <div key={i} className={`bg-white border ${s.color.split(' ')[1]} rounded-2xl overflow-hidden`}>
-                                <div className={`px-6 py-4 ${s.color} flex items-center gap-4 border-b ${s.color.split(' ')[1]}`}>
-                                    <span className={`text-xs font-bold px-2.5 py-1 rounded-lg ${s.numColor}`}>{s.num}</span>
-                                    <span className="text-xl">{s.icon}</span>
-                                    <h3 className="text-sm font-semibold text-gray-900">{s.title}</h3>
-                                </div>
-                                <div className="px-6 py-4">
-                                    <ol className="space-y-2.5">
-                                        {s.items.map((item, j) => (
-                                            <li key={j} className="flex items-start gap-3 text-sm text-gray-700 leading-relaxed">
-                                                <span className="w-5 h-5 rounded-full bg-gray-100 text-gray-500 text-xs font-semibold flex items-center justify-center flex-shrink-0 mt-0.5">
-                                                    {j + 1}
-                                                </span>
-                                                {item}
-                                            </li>
-                                        ))}
-                                    </ol>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </section>
-
-                {/* ── Character limits ──────────────────────────────── */}
-                <section id="limits">
-                    <div className="mb-8">
-                        <div className="flex items-center gap-3 mb-2">
-                            <span className="text-2xl">📏</span>
-                            <h2 className="text-2xl font-bold text-gray-900">Character limits & tips</h2>
-                        </div>
-                        <p className="text-gray-500 text-sm">Each platform has different limits and best practices for content length.</p>
-                    </div>
-
-                    <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
-                        <div className="grid grid-cols-4 text-xs font-semibold text-gray-500 uppercase tracking-wide px-5 py-3 bg-gray-50 border-b border-gray-200">
-                            <span>Platform</span>
-                            <span>Max length</span>
-                            <span className="col-span-2">Best practice</span>
-                        </div>
-                        {charLimits.map((row, i) => (
-                            <div key={i} className={`grid grid-cols-4 items-center px-5 py-4 gap-3 ${i < charLimits.length - 1 ? 'border-b border-gray-100' : ''}`}>
-                                <div className="flex items-center gap-2">
-                                    {row.icon}
-                                    <span className="text-sm font-medium text-gray-800">{row.platform}</span>
-                                </div>
-                                <span className="text-sm font-semibold text-indigo-600 font-mono">{row.limit}</span>
-                                <span className="col-span-2 text-sm text-gray-600 leading-relaxed">{row.tip}</span>
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Image requirement callout */}
-                    <div className="mt-4 bg-pink-50 border border-pink-200 rounded-2xl p-5 flex items-start gap-3">
-                        <InstagramIcon size={24} />
-                        <div>
-                            <h4 className="text-sm font-semibold text-gray-900 mb-1">Instagram posts published through OneSocial require an image.</h4>
-                            <p className="text-sm text-gray-600 leading-relaxed">
-                               Instagram posts require a
-        publicly accessible image URL. Local files cannot be published through
-        the Instagram API. Services like Cloudinary or Imgur work well.
-                            </p>
-                        </div>
-                    </div>
-                </section>
-
-                {/* ── FAQ ───────────────────────────────────────────── */}
-                <section id="faq">
-                    <div className="mb-8">
-                        <div className="flex items-center gap-3 mb-2">
-                            <span className="text-2xl">❓</span>
-                            <h2 className="text-2xl font-bold text-gray-900">Frequently asked questions</h2>
-                        </div>
-                        <p className="text-gray-500 text-sm">Answers to the most common questions from new users.</p>
-                    </div>
-                    <div className="space-y-2">
-                        {faqs.map((faq, i) => (
-                            <FAQItem key={i} q={faq.q} a={faq.a} />
-                        ))}
-                    </div>
-                </section>
-
-                {/* ── CTA ───────────────────────────────────────────── */}
-                <section className="bg-indigo-600 rounded-3xl p-10 text-center relative overflow-hidden">
-                    <div className="absolute -top-10 -right-10 w-48 h-48 bg-indigo-500 rounded-full opacity-40" />
-                    <div className="absolute -bottom-12 -left-12 w-56 h-56 bg-indigo-700 rounded-full opacity-30" />
-                    <div className="relative z-10">
-                        <h2 className="text-2xl font-bold text-white mb-3">Ready to get started?</h2>
-                        <p className="text-indigo-200 text-sm mb-7 max-w-md mx-auto">
-                            Create your free account, connect your platforms, and publish your first post in under 5 minutes.
-                        </p>
-                        <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                            <button
-                                onClick={() => navigate('/register')}
-                                className="px-7 py-3 bg-white text-indigo-600 font-bold rounded-xl hover:bg-indigo-50 transition-all text-sm shadow-lg"
-                            >
-                                Create free account →
+            {/* FAQ */}
+            <section style={{ maxWidth:760, margin:'0 auto', padding:'64px 24px' }}>
+                <div style={{ textAlign:'center', marginBottom:36 }}>
+                    <p style={{ fontFamily:'JetBrains Mono,monospace', fontSize:10, color:'#428475', textTransform:'uppercase', letterSpacing:'0.12em', margin:'0 0 8px' }}>FAQ</p>
+                    <h2 style={{ fontFamily:'Space Grotesk,sans-serif', fontSize:30, fontWeight:700, color:'#1A312C', margin:0, letterSpacing:'-0.01em' }}>Common questions</h2>
+                </div>
+                <div style={{ display:'flex', flexDirection:'column', gap:0, border:'1.5px solid rgba(26,49,44,.1)', borderRadius:18, overflow:'hidden' }}>
+                    {faqs.map((faq,i) => (
+                        <div key={i} style={{ borderBottom: i<faqs.length-1?'1px solid rgba(26,49,44,.08)':'none' }}>
+                            <button onClick={()=>setOpenFaq(openFaq===i?null:i)}
+                                style={{ width:'100%', display:'flex', alignItems:'center', justifyContent:'space-between', padding:'18px 22px', background:'#fff', border:'none', cursor:'pointer', textAlign:'left', transition:'background .15s' }}
+                                onMouseEnter={e=>e.currentTarget.style.background='rgba(26,49,44,.02)'}
+                                onMouseLeave={e=>e.currentTarget.style.background='#fff'}>
+                                <span style={{ fontFamily:'Space Grotesk,sans-serif', fontWeight:600, fontSize:14, color:'#1A312C' }}>{faq.q}</span>
+                                <span style={{ fontSize:16, color:'#428475', transition:'transform .2s', transform: openFaq===i?'rotate(45deg)':'none', display:'inline-block', flexShrink:0, marginLeft:12 }}>+</span>
                             </button>
-                            <button
-                                onClick={() => navigate('/')}
-                                className="px-7 py-3 bg-indigo-500 text-white font-semibold rounded-xl hover:bg-indigo-400 transition-all text-sm border border-indigo-400"
-                            >
-                                Back to home
-                            </button>
+                            {openFaq===i && (
+                                <div style={{ padding:'0 22px 18px', background:'#fff' }}>
+                                    <p style={{ fontSize:13, color:'#428475', lineHeight:1.75, margin:0 }}>{faq.ans}</p>
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            </section>
+
+            {/* CTA */}
+            <section style={{ padding:'0 24px 64px' }}>
+                <div style={{ maxWidth:1100, margin:'0 auto' }}>
+                    <div style={{ background:'#1A312C', borderRadius:24, padding:'48px', textAlign:'center', position:'relative', overflow:'hidden' }}>
+                        <div style={{ position:'absolute', top:-30, right:-30, width:180, height:180, borderRadius:'50%', background:'#89D7B7', opacity:.06 }}/>
+                        <div style={{ position:'relative', zIndex:1 }}>
+                            <h2 style={{ fontFamily:'Space Grotesk,sans-serif', fontSize:28, fontWeight:700, color:'#fff', margin:'0 0 12px', letterSpacing:'-0.01em' }}>Ready to try it yourself?</h2>
+                            <p style={{ fontSize:14, color:'rgba(137,215,183,.6)', margin:'0 0 24px' }}>Create your free account and publish your first post in minutes.</p>
+                            <div style={{ display:'flex', gap:12, justifyContent:'center', flexWrap:'wrap' }}>
+                                <button onClick={()=>navigate('/register')} style={{ padding:'12px 28px', background:'#89D7B7', color:'#1A312C', border:'none', borderRadius:12, fontSize:14, fontWeight:700, cursor:'pointer', fontFamily:'Space Grotesk,sans-serif' }}>
+                                    Create free account →
+                                </button>
+                                <button onClick={()=>navigate('/login')} style={{ padding:'12px 28px', background:'rgba(255,255,255,.07)', color:'#fff', border:'1.5px solid rgba(255,255,255,.15)', borderRadius:12, fontSize:14, fontWeight:600, cursor:'pointer' }}>
+                                    Sign in
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </section>
+                </div>
+            </section>
 
-            </div>
-
-            {/* ── Footer ────────────────────────────────────────────────── */}
-            <footer className="border-t border-gray-100 py-8 mt-8">
-                <div className="max-w-4xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-                    <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-md bg-indigo-600 flex items-center justify-center text-white font-bold text-xs">OS</div>
-                        <span className="text-sm font-semibold text-gray-700">OneSocial</span>
+            {/* Footer */}
+            <footer style={{ borderTop:'1px solid rgba(26,49,44,.1)', padding:'24px', background:'#FFF4E1' }}>
+                <div style={{ maxWidth:1100, margin:'0 auto', display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:12 }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                        <div style={{ width:22, height:22, borderRadius:6, background:'#1A312C', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                            <span style={{ fontFamily:'Space Grotesk,sans-serif', fontWeight:700, fontSize:8, color:'#89D7B7' }}>OS</span>
+                        </div>
+                        <span style={{ fontSize:13, fontWeight:600, color:'#1A312C' }}>OneSocial</span>
                     </div>
-                    <div className="flex items-center gap-5 text-sm text-gray-400">
-                        <button onClick={() => navigate('/')} className="hover:text-indigo-600 transition-colors">Home</button>
-                        <button onClick={() => navigate('/register')} className="hover:text-indigo-600 transition-colors">Register</button>
-                        <button onClick={() => navigate('/login')} className="hover:text-indigo-600 transition-colors">Login</button>
-                        <span>© 2026 OneSocial</span>
+                    <div style={{ display:'flex', gap:20 }}>
+                        {[['Home','/'],['Login','/login'],['Register','/register'],['Privacy','/privacy']].map(([l,p]) => (
+                            <button key={l} onClick={()=>navigate(p)} style={{ background:'none', border:'none', fontSize:12, color:'#428475', cursor:'pointer', fontFamily:'Inter,sans-serif' }}>{l}</button>
+                        ))}
                     </div>
                 </div>
             </footer>
